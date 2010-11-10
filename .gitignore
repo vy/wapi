@@ -1,0 +1,10 @@
+.sconsign.dblite
+doc/html
+examples/*.o
+examples/*.so
+gmon.out
+lib/*
+semantic.cache
+src/*.o
+src/*.os
+TAGS
