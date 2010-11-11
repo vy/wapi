@@ -19,6 +19,26 @@
 /*-- Utility Routines --------------------------------------------------------*/
 
 
+#define WAPI_IOCTL_STRERROR(cmd)					\
+	fprintf(										\
+		stderr, "%s:%d:%s():ioctl(%s):%d: %s\n",	\
+		__FILE__, __LINE__, __func__,				\
+		#cmd, errno, strerror(errno))
+
+
+#define WAPI_STRERROR(fmt, ...)					\
+	fprintf(									\
+		stderr, "%s:%d:%s():" fmt ":%d: %s\n",	\
+		__FILE__, __LINE__, __func__,			\
+		## __VA_ARGS__, errno, strerror(errno))
+
+
+#define WAPI_ERROR(fmt, ...)							\
+	fprintf(											\
+		stderr, "%s:%d:%s(): " fmt ,					\
+		__FILE__, __LINE__, __func__, ## __VA_ARGS__)
+
+
 int
 wapi_make_socket(void)
 {
@@ -41,7 +61,6 @@ int
 wapi_get_we_version(int sock, const char *ifname, int *we_version)
 {
 	struct iwreq wrq;
-	struct iw_range *range;
 	char buf[sizeof(struct iw_range) * 2];
 	int ret;
 
@@ -51,13 +70,13 @@ wapi_get_we_version(int sock, const char *ifname, int *we_version)
 	wrq.u.data.length = sizeof(buf);
 	wrq.u.data.flags = 0;
 
-	/* Do request. */
-	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWRANGE, &wrq)) < 0)
-		return ret;
-
 	/* Get WE version. */
-	range = (struct iw_range *) buf;
-	*we_version = (int) range->we_version_compiled;
+	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWRANGE, &wrq)) >= 0)
+	{
+		struct iw_range *range = (struct iw_range *) buf;
+		*we_version = (int) range->we_version_compiled;
+	}
+	else WAPI_IOCTL_STRERROR(SIOCGIWRANGE);
 
 	return ret;
 }
@@ -77,10 +96,7 @@ wapi_get_ifnames(wapi_list_t *list)
 	fp = fopen(WAPI_PROC_NET_WIRELESS, "r");
 	if (!fp)
 	{
-		fprintf(
-			stderr,
-			"wapi_get_ifnames(): fopen() failed for reading "
-			"WAPI_PROC_NET_WIRELESS: " WAPI_PROC_NET_WIRELESS "\n");
+		WAPI_STRERROR("fopen(\"%s\", \"r\")", WAPI_PROC_NET_WIRELESS);
 		return -1;
 	}
 
@@ -104,7 +120,7 @@ wapi_get_ifnames(wapi_list_t *list)
 		string = malloc(sizeof(wapi_string_t) + (end - beg + sizeof(char)));
 		if (!string)
 		{
-			fprintf(stderr, "wapi_get_ifnames(): malloc() failed!\n");
+			WAPI_STRERROR("malloc()");
 			ret = -1;
 			break;
 		}
@@ -178,9 +194,7 @@ wapi_get_freq(int sock, const char *ifname, double *freq, wapi_freq_flag_t *flag
 			*flag = WAPI_FREQ_FIXED;
 		else
 		{
-			fprintf(
-				stderr, "wapi_get_freq(): Unknown flag: %d.\n",
-				wrq.u.freq.flags);
+			WAPI_ERROR("Unknown flag: %d.\n", wrq.u.freq.flags);
 			return -1;
 		}
 
@@ -196,6 +210,7 @@ int
 wapi_set_freq(int sock, const char *ifname, double freq, wapi_freq_flag_t flag)
 {
 	struct iwreq wrq;
+	int ret;
 
 	/* Set freq. */
 	wapi_float2freq(freq, &(wrq.u.freq));
@@ -211,7 +226,10 @@ wapi_set_freq(int sock, const char *ifname, double freq, wapi_freq_flag_t flag)
 		break;
 	}
 
-	return wapi_ioctl(sock, ifname, SIOCSIWFREQ, &wrq);
+	ret = wapi_ioctl(sock, ifname, SIOCSIWFREQ, &wrq);
+	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWFREQ);
+
+	return ret;
 }
 
 
@@ -239,7 +257,8 @@ wapi_get_essid(
 	wrq.u.essid.flags = 0;
 
 	ret = wapi_ioctl(sock, ifname, SIOCGIWESSID, &wrq);
-	*flag = (wrq.u.essid.flags) ? WAPI_ESSID_ON : WAPI_ESSID_OFF;
+	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCGIWESSID);
+	else *flag = (wrq.u.essid.flags) ? WAPI_ESSID_ON : WAPI_ESSID_OFF;
 
 	return ret;
 }
@@ -254,6 +273,7 @@ wapi_set_essid(
 {
 	char buf[WAPI_ESSID_MAX_SIZE + 1];
 	struct iwreq wrq;
+	int ret;
 
 	/* Prepare request. */
     wrq.u.essid.pointer = buf;
@@ -261,7 +281,10 @@ wapi_set_essid(
 		snprintf(buf, ((WAPI_ESSID_MAX_SIZE + 1) * sizeof(char)), "%s", essid);
 	wrq.u.essid.flags = (flag == WAPI_ESSID_ON);
 
-	return wapi_ioctl(sock, ifname, SIOCSIWESSID, &wrq);
+	ret = wapi_ioctl(sock, ifname, SIOCSIWESSID, &wrq);
+	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWESSID);
+
+	return ret;
 }
 
 
@@ -295,7 +318,7 @@ wapi_parse_mode(int iw_mode, wapi_mode_t *wapi_mode)
 		return 0;
 
 	default:
-		fprintf(stderr, "wapi_parse_mode(): Unknown mode: %d.", iw_mode);
+		WAPI_ERROR("Unknown mode: %d.\n", iw_mode);
 		return -1;
 	}
 }
@@ -309,6 +332,7 @@ wapi_get_mode(int sock, const char *ifname, wapi_mode_t *mode)
 
 	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWMODE, &wrq)) >= 0)
 		ret = wapi_parse_mode(wrq.u.mode, mode);
+	else WAPI_IOCTL_STRERROR(SIOCGIWMODE);
 
 	return ret;
 }
@@ -318,10 +342,14 @@ int
 wapi_set_mode(int sock, const char *ifname, wapi_mode_t mode)
 {
 	struct iwreq wrq;
+	int ret;
 
 	wrq.u.mode = mode;
 
-	return wapi_ioctl(sock, ifname, SIOCSIWMODE, &wrq);
+	ret = wapi_ioctl(sock, ifname, SIOCSIWMODE, &wrq);
+	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWMODE);
+
+	return ret;
 }
 
 
@@ -352,6 +380,7 @@ wapi_get_ap(int sock, const char *ifname, struct sockaddr *ap)
 
 	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWAP, &wrq)) >= 0)
 		memcpy(ap, &(wrq.u.ap_addr), sizeof(struct sockaddr));
+	else WAPI_IOCTL_STRERROR(SIOCGIWAP);
 
 	return ret;
 }
@@ -361,13 +390,17 @@ int
 wapi_set_ap(int sock, const char *ifname, const struct sockaddr *ap)
 {
 	struct iwreq wrq;
+	int ret;
 
 	/* Socket address must be of ARPHRD_ETHER family. */
 	if (ap->sa_family != ARPHRD_ETHER)
 		return -1;
 
 	memcpy(&wrq.u.ap_addr, ap, sizeof(struct sockaddr));
-	return wapi_ioctl(sock, ifname, SIOCSIWAP, &wrq);
+	ret = wapi_ioctl(sock, ifname, SIOCSIWAP, &wrq);
+	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWAP);
+
+	return ret;
 }
 
 
@@ -394,12 +427,16 @@ wapi_get_bitrate(
 	{
 		/* Check if enabled. */
 		if (wrq.u.bitrate.disabled)
+		{
+			WAPI_ERROR("Bitrate is disabled.\n");
 			return -1;
+		}
 
 		/* Get bitrate. */
 		*bitrate = wrq.u.bitrate.value;
 		*flag = wrq.u.bitrate.fixed ? WAPI_BITRATE_FIXED : WAPI_BITRATE_AUTO;
 	}
+	else WAPI_IOCTL_STRERROR(SIOCGIWRATE);
 
 	return ret;
 }
@@ -413,11 +450,15 @@ wapi_set_bitrate(
 	wapi_bitrate_flag_t flag)
 {
 	struct iwreq wrq;
+	int ret;
 
 	wrq.u.bitrate.value = bitrate;
 	wrq.u.bitrate.fixed = (flag == WAPI_BITRATE_FIXED);
 
-	return wapi_ioctl(sock, ifname, SIOCSIWRATE, &wrq);
+	ret = wapi_ioctl(sock, ifname, SIOCSIWRATE, &wrq);
+	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWRATE);
+
+	return ret;
 }
 
 
@@ -470,15 +511,14 @@ wapi_get_txpower(
 			*flag = WAPI_TXPOWER_RELATIVE;
 		else
 		{
-			fprintf(
-				stderr, "wapi_get_txpower(): Unknown flag: %d.\n",
-				wrq.u.txpower.flags);
+			WAPI_ERROR("Unknown flag: %d.\n", wrq.u.txpower.flags);
 			return -1;
 		}
 
 		/* Get power. */
 		*power = wrq.u.txpower.value;
 	}
+	else WAPI_IOCTL_STRERROR(SIOCGIWTXPOW);
 
 	return ret;
 }
@@ -492,6 +532,7 @@ wapi_set_txpower(
 	wapi_txpower_flag_t flag)
 {
 	struct iwreq wrq;
+	int ret;
 
 	/* Construct the request. */
 	wrq.u.txpower.value = power;
@@ -509,7 +550,10 @@ wapi_set_txpower(
 	}
 
 	/* Issue the set command. */
-	return wapi_ioctl(sock, ifname, SIOCSIWTXPOW, &wrq);
+	ret = wapi_ioctl(sock, ifname, SIOCSIWTXPOW, &wrq);
+	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWTXPOW);
+
+	return ret;
 }
 
 
@@ -550,12 +594,16 @@ int
 wapi_scan_init(int sock, const char *ifname)
 {
 	struct iwreq wrq;
+	int ret;
 
 	wrq.u.data.pointer = NULL;
 	wrq.u.data.flags = 0;
 	wrq.u.data.length = 0;
 
-	return wapi_ioctl(sock, ifname, SIOCSIWSCAN, &wrq);
+	ret = wapi_ioctl(sock, ifname, SIOCSIWSCAN, &wrq);
+	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWSCAN);
+
+	return ret;
 }
 
 
@@ -581,6 +629,7 @@ wapi_scan_stat(int sock, const char *ifname)
 
 		printf("err[%d]: %s\n", errno, strerror(errno));
 	}
+	else WAPI_IOCTL_STRERROR(SIOCGIWSCAN);
 
 	return ret;
 }
@@ -609,7 +658,7 @@ wapi_scan_event(struct iw_event *event, wapi_list_t *list)
 		temp = malloc(sizeof(wapi_scan_info_t));
 		if (!temp)
 		{
-			fprintf(stderr, "wapi_scan_event(): malloc() failed!\n");
+			WAPI_STRERROR("malloc()");
 			return -1;
 		}
 
@@ -682,7 +731,7 @@ wapi_scan_coll(int sock, const char *ifname, wapi_list_t *aps)
 	buf = malloc(buflen * sizeof(char));
 	if (!buf)
 	{
-		fprintf(stderr, "wapi_scan_coll(): malloc() failed!\n");
+		WAPI_STRERROR("malloc()");
 		return -1;
 	}
 
@@ -699,7 +748,7 @@ alloc:
 		tmp = realloc(buf, buflen);
 		if (!tmp)
 		{
-			fprintf(stderr, "wapi_scan_coll(): realloc() failed!\n");
+			WAPI_STRERROR("realloc()");
 			free(buf);
 			return -1;
 		}
@@ -712,6 +761,7 @@ alloc:
 	 * failure. We don't bother, let the user deal with it. */
 	if (ret < 0)
 	{
+		WAPI_IOCTL_STRERROR(SIOCGIWSCAN);
 		free(buf);
 		return ret;
 	}
@@ -730,6 +780,7 @@ alloc:
 				if (eventret < 0)
 					ret = eventret;
 			}
+			else WAPI_ERROR("iw_event_stream_pop() failed!\n");
 		} while (ret > 0);
 	}
 
