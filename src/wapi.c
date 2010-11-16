@@ -19,18 +19,18 @@
 /*-- Utility Routines --------------------------------------------------------*/
 
 
-#define WAPI_IOCTL_STRERROR(cmd)					\
-	fprintf(										\
-		stderr, "%s:%d:%s():ioctl(%s):%d: %s\n",	\
-		__FILE__, __LINE__, __func__,				\
-		#cmd, errno, strerror(errno))
+#define WAPI_IOCTL_STRERROR(cmd)				\
+	fprintf(									\
+		stderr, "%s:%d:%s():ioctl(%s): %s\n",	\
+		__FILE__, __LINE__, __func__,			\
+		#cmd, strerror(errno))
 
 
 #define WAPI_STRERROR(fmt, ...)					\
 	fprintf(									\
-		stderr, "%s:%d:%s():" fmt ":%d: %s\n",	\
+		stderr, "%s:%d:%s():" fmt ": %s\n",		\
 		__FILE__, __LINE__, __func__,			\
-		## __VA_ARGS__, errno, strerror(errno))
+		## __VA_ARGS__, strerror(errno))
 
 
 #define WAPI_ERROR(fmt, ...)							\
