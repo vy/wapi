@@ -1,8 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <strings.h>
 #include <string.h>
-#include <errno.h>
 
 #include "wapi.h"
 
@@ -156,16 +155,24 @@ scan(int sock, const char *ifname)
 
 	/* print found aps */
 	for (info = list.head.scan; info; info = info->next)
-		printf(">> @%xl%s\n", (size_t) info, (info->has_essid ? info->essid : ""));
+		printf(">> @%xl %s\n", (size_t) info, (info->has_essid ? info->essid : ""));
 }
 
 
 int
-main(void)
+main(int argc, char *argv[])
 {
+	const char *ifname;
 	wapi_list_t names;
 	int ret;
 	int sock;
+
+	if (argc != 2)
+	{
+		fprintf(stderr, "Usage: %s <IFNAME>\n", argv[0]);
+		return EXIT_FAILURE;
+	}
+	ifname = argv[1];
 
 	bzero(&names, sizeof(wapi_list_t));
 	ret = wapi_get_ifnames(&names);
@@ -185,20 +192,20 @@ main(void)
 
 	printf("\ninitial conf\n");
 	printf("------------\n");
-	get(sock, "wlan0");
+	get(sock, ifname);
 
 #ifdef ENABLE_SET
 	printf("\nchanging conf...\n");
-	set(sock, "wlan0");
+	set(sock, ifname);
 
 	printf("\nfinal conf\n");
 	printf("----------\n");
-	get(sock, "wlan0");
+	get(sock, ifname);
 #endif
 
 	printf("\nscan\n");
 	printf("----\n");
-	scan(sock, "wlan0");
+	scan(sock, ifname);
 
-	return 0;
+	return EXIT_SUCCESS;
 }
