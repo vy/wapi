@@ -1,4 +1,3 @@
-//#include <iwlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -10,7 +9,6 @@
 #ifndef __user
 #define __user
 #endif
-
 
 #include "iwlib.h"
 #include "wapi.h"
@@ -167,15 +165,15 @@ wapi_float2freq(double floatfreq, struct iw_freq *freq)
 {
 	freq->e = (short) floor(log10(floatfreq));
 	if (freq->e > 8)
-    {
+	{
 		freq->m = ((long) (floor(floatfreq / pow(10,freq->e - 6)))) * 100;
 		freq->e -= 8;
-    }
+	}
 	else
-    {
+	{
 		freq->m = (long) floatfreq;
 		freq->e = 0;
-    }
+	}
 }
 
 
@@ -276,7 +274,7 @@ wapi_set_essid(
 	int ret;
 
 	/* Prepare request. */
-    wrq.u.essid.pointer = buf;
+	wrq.u.essid.pointer = buf;
 	wrq.u.essid.length =
 		snprintf(buf, ((WAPI_ESSID_MAX_SIZE + 1) * sizeof(char)), "%s", essid);
 	wrq.u.essid.flags = (flag == WAPI_ESSID_ON);
@@ -768,7 +766,7 @@ alloc:
 
 	/* We have the results, process them. */
 	if (wrq.u.data.length)
-    {
+	{
 		struct iw_event iwe;
 		struct iw_event_stream stream;
 
