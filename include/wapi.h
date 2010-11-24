@@ -28,17 +28,78 @@
  * This section is composed of accessors (getters and setters) for various
  * network interface configurations. Each accessor requires a socket (see
  * wapi_make_socket()) to issue kernel commands. Since each accessor is a
- * user-friendly wrapper over various ioctl() calls, return values of the
- * accessors are generally obtained by related ioctl() calls. In other words, on
- * success, zero is returned.
+ * user-friendly wrapper over various ioctl() calls, unless stated otherwise,
+ * return values of the accessors are generally obtained by related ioctl()
+ * calls. In other words, on success, zero is returned.
  *
  * Pay attention that, all setters require root privileges.
  */
 
 
 /**
- * @defgroup freq Frequency Accessors
+ * @defgroup ifaccessors Generic Network Interface Accessors
  * @ingroup accessors
+ *
+ * This section consists of generic network interface accessors (IP address,
+ * gateway, netmask) without any device specific features.
+ */
+
+
+/**
+ * @defgroup ip IP (Internet Protocol) Accessors
+ * @ingroup ifaccessors
+ * @{
+ */
+
+
+/**
+ * Gets IP address of the given network interface.
+ */
+int wapi_get_ip(int sock, const char *ifname, struct sockaddr *addr);
+
+
+
+/**
+ * Sets IP adress of the given network interface.
+ */
+int wapi_set_ip(int sock, const char *ifname, const struct sockaddr *addr);
+
+
+/** @} */
+
+
+/**
+ * @defgroup wifaccessors Wireless Interface Accessors
+ * @ingroup accessors
+ *
+ * This section consists of accessor functions dedicated to wireless network
+ * interfaces.
+ */
+
+
+/**
+ * @defgroup misc Miscellaneous Accessors
+ * @ingroup wifaccessors
+ * @{
+ */
+
+
+/**
+ * Gets kernel WE (Wireless Extensions) version.
+ *
+ * @param[out] we_version Set to @c we_version_compiled of range information.
+ *
+ * @return zero on success.
+ */
+int wapi_get_we_version(int sock, const char *ifname, int *we_version);
+
+
+/** @} */
+
+
+/**
+ * @defgroup freq Frequency Accessors
+ * @ingroup wifaccessors
  * @{
  */
 
@@ -80,7 +141,7 @@ wapi_set_freq(
 
 /**
  * @defgroup essid ESSID (Extended Service Set Identifier) Accessors
- * @ingroup accessors
+ * @ingroup wifaccessors
  * @{
  */
 
@@ -132,7 +193,7 @@ wapi_set_essid(
 
 /**
  * @defgroup mode Operating Mode
- * @ingroup accessors
+ * @ingroup wifaccessors
  * @{
  */
 
@@ -170,7 +231,7 @@ int wapi_set_mode(int sock, const char *ifname, wapi_mode_t mode);
 
 /**
  * @defgroup ap Access Point
- * @ingroup accessors
+ * @ingroup wifaccessors
  * @{
  */
 
@@ -178,13 +239,13 @@ int wapi_set_mode(int sock, const char *ifname, wapi_mode_t mode);
 /**
  * Creates an ethernet broadcast address.
  */
-void wapi_make_broad_ether(struct sockaddr *sa);
+int wapi_make_broad_ether(struct sockaddr *sa);
 
 
 /**
  * Creates an ethernet NULL address.
  */
-void wapi_make_null_ether(struct sockaddr *sa);
+int wapi_make_null_ether(struct sockaddr *sa);
 
 
 /**
@@ -207,7 +268,7 @@ int wapi_set_ap(int sock, const char *ifname, const struct sockaddr *ap);
 
 /**
  * @defgroup bitrate Bit Rate
- * @ingroup accessors
+ * @ingroup wifaccessors
  * @{
  */
 
@@ -254,7 +315,7 @@ wapi_set_bitrate(
 
 /**
  * @defgroup txpower Transmit Power
- * @ingroup accessors
+ * @ingroup wifaccessors
  * @{
  */
 
@@ -361,19 +422,9 @@ typedef struct wapi_list_t {
 /**
  * Creates an AF_INET socket to be used in ioctl() calls.
  *
- * @return non-negative if succeeds.
+ * @return non-negative on success.
  */
 int wapi_make_socket(void);
-
-
-/**
- * Gets kernel WE (Wireless Extensions) version.
- *
- * @param[out] we_version Set to @c we_version_compiled of range information.
- *
- * @return zero if succeeds.
- */
-int wapi_get_we_version(int sock, const char *ifname, int *we_version);
 
 
 /** Path to @c /proc/net/wireless. (Requires procfs mounted.) */
@@ -384,7 +435,7 @@ int wapi_get_we_version(int sock, const char *ifname, int *we_version);
  * Parses @c WAPI_PROC_NET_WIRELESS according to hardcoded mechanisms in @c
  * linux/net/wireless/wext-proc.c sources.
  *
- * @return @c 0, on success.
+ * @return @c zero on success.
  */
 int wapi_get_ifnames(wapi_list_t *list);
 

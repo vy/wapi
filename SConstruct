@@ -55,7 +55,7 @@ env.Append(LINKFLAGS = getenv('LDFLAGS', ''))
 
 ### Main #######################################################################
 
-common_srcs = map(to_src_path, ['wapi.c'])
+common_srcs = map(to_src_path, ['util.c', 'network.c', 'wapi.c'])
 common_libs = ["libiw"]
 
 src = env.Clone()
@@ -64,11 +64,6 @@ src.Append(CPPPATH = [SRCDIR])
 src.SharedLibrary(
     opj(LIBDIR, 'wapi'),
     map(src.SharedObject, common_srcs),
-    LIBS = common_libs)
-
-src.StaticLibrary(
-    opj(LIBDIR, 'wapi'),
-    map(src.StaticObject, common_srcs),
     LIBS = common_libs)
 
 exa = env.Clone()

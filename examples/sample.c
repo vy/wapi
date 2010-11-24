@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "wapi.h"
 
@@ -14,6 +17,7 @@ static void
 get(int sock, const char *ifname)
 {
 	int ret;
+	struct sockaddr ip;
 	double freq;
 	wapi_freq_flag_t freq_flag;
 	char essid[WAPI_ESSID_MAX_SIZE + 1];
@@ -25,6 +29,18 @@ get(int sock, const char *ifname)
 	wapi_bitrate_flag_t bitrate_flag;
 	int txpower;
 	wapi_txpower_flag_t txpower_flag;
+
+	/* ip */
+	bzero(&ip, sizeof(struct sockaddr));
+	ret = wapi_get_ip(sock, ifname, &ip);
+	printf("wapi_get_ip(): ret: %d", ret);
+	if (ret >= 0)
+	{
+		struct sockaddr_in sin;
+		memcpy(&sin, &ip, sizeof(struct sockaddr));
+		printf(", ip: %s", inet_ntoa(sin.sin_addr));
+	}
+	putchar('\n');
 
 	/* freq */
 	ret = wapi_get_freq(sock, ifname, &freq, &freq_flag);
@@ -156,6 +172,17 @@ scan(int sock, const char *ifname)
 	/* print found aps */
 	for (info = list.head.scan; info; info = info->next)
 		printf(">> @%xl %s\n", (size_t) info, (info->has_essid ? info->essid : ""));
+
+	/* free ap list */
+	info = list.head.scan;
+	while (info)
+	{
+		wapi_scan_info_t *temp;
+
+		temp = info->next;
+		free(info);
+		info = temp;
+	}
 }
 
 
@@ -167,6 +194,7 @@ main(int argc, char *argv[])
 	int ret;
 	int sock;
 
+	/* check command line args */
 	if (argc != 2)
 	{
 		fprintf(stderr, "Usage: %s <IFNAME>\n", argv[0]);
@@ -174,6 +202,7 @@ main(int argc, char *argv[])
 	}
 	ifname = argv[1];
 
+	/* get ifnames */
 	bzero(&names, sizeof(wapi_list_t));
 	ret = wapi_get_ifnames(&names);
 	printf("wapi_get_ifnames(): ret: %d", ret);
@@ -181,9 +210,22 @@ main(int argc, char *argv[])
 	{
 		wapi_string_t *str;
 
+		/* print ifnames */
 		printf(", ifnames:");
 		for (str = names.head.string; str; str = str->next)
 			printf(" %s", str->data);
+
+		/* free ifnames */
+		str = names.head.string;
+		while (str)
+		{
+			wapi_string_t *tmp;
+
+			tmp = str->next;
+			free(str->data);
+			free(str);
+			str = tmp;
+		}
 	}
 	putchar('\n');
 

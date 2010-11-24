@@ -1,58 +1,13 @@
 #include <stdio.h>
-#include <ctype.h>
-#include <string.h>
 #include <math.h>
-#include <errno.h>
 #include <stdlib.h>
-
-/* kernel includes in userspace */
-#ifndef __user
-#define __user
-#endif
 
 #include "iwlib.h"
 #include "wapi.h"
+#include "util.h"
 
 
-/*-- Utility Routines --------------------------------------------------------*/
-
-
-#define WAPI_IOCTL_STRERROR(cmd)				\
-	fprintf(									\
-		stderr, "%s:%d:%s():ioctl(%s): %s\n",	\
-		__FILE__, __LINE__, __func__,			\
-		#cmd, strerror(errno))
-
-
-#define WAPI_STRERROR(fmt, ...)					\
-	fprintf(									\
-		stderr, "%s:%d:%s():" fmt ": %s\n",		\
-		__FILE__, __LINE__, __func__,			\
-		## __VA_ARGS__, strerror(errno))
-
-
-#define WAPI_ERROR(fmt, ...)							\
-	fprintf(											\
-		stderr, "%s:%d:%s(): " fmt ,					\
-		__FILE__, __LINE__, __func__, ## __VA_ARGS__)
-
-
-int
-wapi_make_socket(void)
-{
-	return socket(AF_INET, SOCK_DGRAM, 0);
-}
-
-
-/**
- * Shortcut to make WE @a ioctl() calls.
- */
-static inline int
-wapi_ioctl(int sock, const char *ifname, int cmd, struct iwreq *wrq)
-{
-	strncpy(wrq->ifr_name, ifname, IFNAMSIZ);
-	return ioctl(sock, cmd, wrq);
-}
+/*-- Misc --------------------------------------------------------------------*/
 
 
 int
@@ -62,6 +17,8 @@ wapi_get_we_version(int sock, const char *ifname, int *we_version)
 	char buf[sizeof(struct iw_range) * 2];
 	int ret;
 
+	WAPI_VALIDATE_PTR(we_version);
+
 	/* Prepare request. */
 	bzero(buf, sizeof(buf));
 	wrq.u.data.pointer = buf;
@@ -69,71 +26,14 @@ wapi_get_we_version(int sock, const char *ifname, int *we_version)
 	wrq.u.data.flags = 0;
 
 	/* Get WE version. */
-	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWRANGE, &wrq)) >= 0)
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	if ((ret = ioctl(sock, SIOCGIWRANGE, &wrq)) >= 0)
 	{
 		struct iw_range *range = (struct iw_range *) buf;
 		*we_version = (int) range->we_version_compiled;
 	}
 	else WAPI_IOCTL_STRERROR(SIOCGIWRANGE);
 
-	return ret;
-}
-
-
-int
-wapi_get_ifnames(wapi_list_t *list)
-{
-	FILE *fp;
-	int ret;
-	char tmp[1024]; /* Can a line be longer than 1024 bytes? */
-
-	/* Validate "list" first. */
-	if (!list) return -1;
-
-	/* Open file for reading. */
-	fp = fopen(WAPI_PROC_NET_WIRELESS, "r");
-	if (!fp)
-	{
-		WAPI_STRERROR("fopen(\"%s\", \"r\")", WAPI_PROC_NET_WIRELESS);
-		return -1;
-	}
-
-	/* Skip first two lines. */
-	fgets(tmp, sizeof(tmp), fp);
-	fgets(tmp, sizeof(tmp), fp);
-
-	/* Iterate over available lines. */
-	ret = 0;
-	while (fgets(tmp, sizeof(tmp), fp))
-	{
-		char *beg;
-		char *end;
-		wapi_string_t *string;
-
-		/* Locate the interface name region. */
-		for (beg = tmp; *beg && isspace(*beg); beg++);
-		for (end = beg; *end && *end != ':'; end++);
-
-		/* Do a single allocation for both wapi_string_t and char vector. */
-		string = malloc(sizeof(wapi_string_t) + (end - beg + sizeof(char)));
-		if (!string)
-		{
-			WAPI_STRERROR("malloc()");
-			ret = -1;
-			break;
-		}
-		string->data = (char *) (string + sizeof(wapi_string_t));
-
-		/* Copy region into the buffer. */
-		memcpy(string->data, beg, (end - beg));
-		*(string->data + (end - beg)) = '\0';
-
-		/* Push string into the list. */
-		string->next = list->head.string;
-		list->head.string = string;
-	}
-
-	fclose(fp);
 	return ret;
 }
 
@@ -183,7 +83,11 @@ wapi_get_freq(int sock, const char *ifname, double *freq, wapi_freq_flag_t *flag
 	struct iwreq wrq;
 	int ret;
 
-	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWFREQ, &wrq)) >= 0)
+	WAPI_VALIDATE_PTR(freq);
+	WAPI_VALIDATE_PTR(flag);
+
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	if ((ret = ioctl(sock, SIOCGIWFREQ, &wrq)) >= 0)
 	{
 		/* Set flag. */
 		if (IW_FREQ_AUTO == (wrq.u.freq.flags & IW_FREQ_AUTO))
@@ -224,7 +128,8 @@ wapi_set_freq(int sock, const char *ifname, double freq, wapi_freq_flag_t flag)
 		break;
 	}
 
-	ret = wapi_ioctl(sock, ifname, SIOCSIWFREQ, &wrq);
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	ret = ioctl(sock, SIOCSIWFREQ, &wrq);
 	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWFREQ);
 
 	return ret;
@@ -250,11 +155,15 @@ wapi_get_essid(
 	struct iwreq wrq;
 	int ret;
 
+	WAPI_VALIDATE_PTR(essid);
+	WAPI_VALIDATE_PTR(flag);
+
 	wrq.u.essid.pointer = essid;
 	wrq.u.essid.length = WAPI_ESSID_MAX_SIZE + 1;
 	wrq.u.essid.flags = 0;
 
-	ret = wapi_ioctl(sock, ifname, SIOCGIWESSID, &wrq);
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	ret = ioctl(sock, SIOCGIWESSID, &wrq);
 	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCGIWESSID);
 	else *flag = (wrq.u.essid.flags) ? WAPI_ESSID_ON : WAPI_ESSID_OFF;
 
@@ -279,7 +188,8 @@ wapi_set_essid(
 		snprintf(buf, ((WAPI_ESSID_MAX_SIZE + 1) * sizeof(char)), "%s", essid);
 	wrq.u.essid.flags = (flag == WAPI_ESSID_ON);
 
-	ret = wapi_ioctl(sock, ifname, SIOCSIWESSID, &wrq);
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	ret = ioctl(sock, SIOCSIWESSID, &wrq);
 	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWESSID);
 
 	return ret;
@@ -328,7 +238,10 @@ wapi_get_mode(int sock, const char *ifname, wapi_mode_t *mode)
 	struct iwreq wrq;
 	int ret;
 
-	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWMODE, &wrq)) >= 0)
+	WAPI_VALIDATE_PTR(mode);
+
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	if ((ret = ioctl(sock, SIOCGIWMODE, &wrq)) >= 0)
 		ret = wapi_parse_mode(wrq.u.mode, mode);
 	else WAPI_IOCTL_STRERROR(SIOCGIWMODE);
 
@@ -344,7 +257,8 @@ wapi_set_mode(int sock, const char *ifname, wapi_mode_t mode)
 
 	wrq.u.mode = mode;
 
-	ret = wapi_ioctl(sock, ifname, SIOCSIWMODE, &wrq);
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	ret = ioctl(sock, SIOCSIWMODE, &wrq);
 	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWMODE);
 
 	return ret;
@@ -354,19 +268,27 @@ wapi_set_mode(int sock, const char *ifname, wapi_mode_t mode)
 /*-- Access Point ------------------------------------------------------------*/
 
 
-void
+int
 wapi_make_broad_ether(struct sockaddr *sa)
 {
+	WAPI_VALIDATE_PTR(sa);
+
 	sa->sa_family = ARPHRD_ETHER;
 	memset(sa->sa_data, 0xFF, ETH_ALEN);
+
+	return 0;
 }
 
 
-void
+int
 wapi_make_null_ether(struct sockaddr *sa)
 {
+	WAPI_VALIDATE_PTR(sa);
+
 	sa->sa_family = ARPHRD_ETHER;
 	memset(sa->sa_data, 0x00, ETH_ALEN);
+
+	return 0;
 }
 
 
@@ -376,7 +298,10 @@ wapi_get_ap(int sock, const char *ifname, struct sockaddr *ap)
 	struct iwreq wrq;
 	int ret;
 
-	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWAP, &wrq)) >= 0)
+	WAPI_VALIDATE_PTR(ap);
+
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	if ((ret = ioctl(sock, SIOCGIWAP, &wrq)) >= 0)
 		memcpy(ap, &(wrq.u.ap_addr), sizeof(struct sockaddr));
 	else WAPI_IOCTL_STRERROR(SIOCGIWAP);
 
@@ -390,12 +315,15 @@ wapi_set_ap(int sock, const char *ifname, const struct sockaddr *ap)
 	struct iwreq wrq;
 	int ret;
 
+	WAPI_VALIDATE_PTR(ap);
+
 	/* Socket address must be of ARPHRD_ETHER family. */
 	if (ap->sa_family != ARPHRD_ETHER)
 		return -1;
 
 	memcpy(&wrq.u.ap_addr, ap, sizeof(struct sockaddr));
-	ret = wapi_ioctl(sock, ifname, SIOCSIWAP, &wrq);
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	ret = ioctl(sock, SIOCSIWAP, &wrq);
 	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWAP);
 
 	return ret;
@@ -421,7 +349,11 @@ wapi_get_bitrate(
 	struct iwreq wrq;
 	int ret;
 
-	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWRATE, &wrq)) >= 0)
+	WAPI_VALIDATE_PTR(bitrate);
+	WAPI_VALIDATE_PTR(flag);
+
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	if ((ret = ioctl(sock, SIOCGIWRATE, &wrq)) >= 0)
 	{
 		/* Check if enabled. */
 		if (wrq.u.bitrate.disabled)
@@ -453,7 +385,8 @@ wapi_set_bitrate(
 	wrq.u.bitrate.value = bitrate;
 	wrq.u.bitrate.fixed = (flag == WAPI_BITRATE_FIXED);
 
-	ret = wapi_ioctl(sock, ifname, SIOCSIWRATE, &wrq);
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	ret = ioctl(sock, SIOCSIWRATE, &wrq);
 	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWRATE);
 
 	return ret;
@@ -494,7 +427,11 @@ wapi_get_txpower(
 	struct iwreq wrq;
 	int ret;
 
-	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWTXPOW, &wrq)) >= 0)
+	WAPI_VALIDATE_PTR(power);
+	WAPI_VALIDATE_PTR(flag);
+
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	if ((ret = ioctl(sock, SIOCGIWTXPOW, &wrq)) >= 0)
 	{
 		/* Check if enabled. */
 		if (wrq.u.txpower.disabled)
@@ -548,7 +485,8 @@ wapi_set_txpower(
 	}
 
 	/* Issue the set command. */
-	ret = wapi_ioctl(sock, ifname, SIOCSIWTXPOW, &wrq);
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	ret = ioctl(sock, SIOCSIWTXPOW, &wrq);
 	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWTXPOW);
 
 	return ret;
@@ -559,18 +497,18 @@ wapi_set_txpower(
 
 
 struct iw_event_stream {
-  char *end;		/* end of the stream */
-  char *current;	/* current event in stream of events */
-  char *value;		/* current value in event */
+	char *end;		/* end of the stream */
+	char *current;	/* current event in stream of events */
+	char *value;		/* current value in event */
 };
 
 
 static void
 iw_event_stream_init(struct iw_event_stream *stream, char *data, size_t len)
 {
-  memset(stream, 0, sizeof(struct iw_event_stream));
-  stream->current = data;
-  stream->end = &data[len];
+	memset(stream, 0, sizeof(struct iw_event_stream));
+	stream->current = data;
+	stream->end = &data[len];
 }
 
 
@@ -585,7 +523,7 @@ iw_event_stream_pop(
 }
 
 
-/*-- Scanning Routines -------------------------------------------------------*/
+/*-- Scanning ----------------------------------------------------------------*/
 
 
 int
@@ -598,7 +536,8 @@ wapi_scan_init(int sock, const char *ifname)
 	wrq.u.data.flags = 0;
 	wrq.u.data.length = 0;
 
-	ret = wapi_ioctl(sock, ifname, SIOCSIWSCAN, &wrq);
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	ret = ioctl(sock, SIOCSIWSCAN, &wrq);
 	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWSCAN);
 
 	return ret;
@@ -616,7 +555,8 @@ wapi_scan_stat(int sock, const char *ifname)
 	wrq.u.data.flags = 0;
 	wrq.u.data.length = 0;
 
-	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWSCAN, &wrq)) < 0)
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	if ((ret = ioctl(sock, SIOCGIWSCAN, &wrq)) < 0)
 	{
 		if (errno == E2BIG)
 			/* Data is ready, but not enough space, which is expected. */
@@ -637,10 +577,6 @@ static int
 wapi_scan_event(struct iw_event *event, wapi_list_t *list)
 {
 	wapi_scan_info_t *info;
-
-	/* Validate "list" first.*/
-	if (!list)
-		return -1;
 
 	/* Get current "wapi_info_t". */
 	info = list->head.scan;
@@ -721,6 +657,8 @@ wapi_scan_coll(int sock, const char *ifname, wapi_list_t *aps)
 	int we_version;
 	int ret;
 
+	WAPI_VALIDATE_PTR(aps);
+
 	/* Get WE version. (Required for event extraction via libiw.) */
 	if ((ret = wapi_get_we_version(sock, ifname, &we_version)) < 0)
 		return ret;
@@ -738,7 +676,8 @@ alloc:
 	wrq.u.data.pointer = buf;
 	wrq.u.data.length = buflen;
 	wrq.u.data.flags = 0;
-	if ((ret = wapi_ioctl(sock, ifname, SIOCGIWSCAN, &wrq)) < 0 && errno == E2BIG)
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	if ((ret = ioctl(sock, SIOCGIWSCAN, &wrq)) < 0 && errno == E2BIG)
 	{
 		char *tmp;
 
