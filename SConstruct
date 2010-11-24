@@ -55,7 +55,7 @@ env.Append(LINKFLAGS = getenv('LDFLAGS', ''))
 
 ### Main #######################################################################
 
-common_srcs = map(to_src_path, ['util.c', 'network.c', 'wapi.c'])
+common_srcs = map(to_src_path, ['util.c', 'network.c', 'wireless.c'])
 common_libs = ["libiw"]
 
 src = env.Clone()

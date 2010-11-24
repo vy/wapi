@@ -11,10 +11,12 @@
 
 /**
  * Gets current configuration of the @a ifname using WAPI accessors and prints
- * them in a pretty fashion with their corresponding return values.
+ * them in a pretty fashion with their corresponding return values. If a getter
+ * succeeds, we try to set that property with the same value to test the setters
+ * as well.
  */
 static void
-get(int sock, const char *ifname)
+conf(int sock, const char *ifname)
 {
 	int ret;
 	struct sockaddr ip;
@@ -30,7 +32,7 @@ get(int sock, const char *ifname)
 	int txpower;
 	wapi_txpower_flag_t txpower_flag;
 
-	/* ip */
+	/* get ip */
 	bzero(&ip, sizeof(struct sockaddr));
 	ret = wapi_get_ip(sock, ifname, &ip);
 	printf("wapi_get_ip(): ret: %d", ret);
@@ -39,37 +41,68 @@ get(int sock, const char *ifname)
 		struct sockaddr_in sin;
 		memcpy(&sin, &ip, sizeof(struct sockaddr));
 		printf(", ip: %s", inet_ntoa(sin.sin_addr));
+
+#ifdef ENABLE_SET
+		/* set ip (Make sure sin.sin_family is set to AF_INET.) */
+		ret = wapi_set_ip(sock, ifname, (struct sockaddr *) &sin);
+		printf("\nwapi_set_ip(): ret: %d", ret);
+#endif
 	}
 	putchar('\n');
 
-	/* freq */
+	/* get freq */
 	ret = wapi_get_freq(sock, ifname, &freq, &freq_flag);
 	printf("wapi_get_freq(): ret: %d", ret);
 	if (ret >= 0)
+	{
 		printf(", freq: %g, freq_flag: %s", freq, wapi_freq_flags[freq_flag]);
+
+#ifdef ENABLE_SET
+		/* set freq */
+		ret = wapi_set_freq(sock, ifname, freq, freq_flag);
+		printf("\nwapi_set_freq(): ret: %d", ret);
+#endif
+	}
 	putchar('\n');
 
-	/* essid */
+	/* get essid */
 	ret = wapi_get_essid(sock, ifname, essid, &essid_flag);
 	printf("wapi_get_essid(): ret: %d", ret);
 	if (ret >= 0)
+	{
 		printf(
 			", essid: %s, essid_flag: %s",
 			essid, wapi_essid_flags[essid_flag]);
+
+#ifdef ENABLE_SET
+		/* set essid */
+		ret = wapi_set_essid(sock, ifname, essid, essid_flag);
+		printf("\nwapi_set_essid(): ret: %d", ret);
+#endif
+	}
 	putchar('\n');
 
-	/* operating mode */
+	/* get operating mode */
 	ret = wapi_get_mode(sock, ifname, &mode);
 	printf("wapi_get_mode(): ret: %d", ret);
 	if (ret >= 0)
+	{
 		printf(", mode: %s", wapi_modes[mode]);
+
+#ifdef ENABLE_SET
+		/* set operating mode */
+		ret = wapi_set_mode(sock, ifname, mode);
+		printf("\nwapi_set_mode(): ret: %d", ret);
+#endif
+	}
 	putchar('\n');
 
-	/* ap */
+	/* get ap */
 	ret = wapi_get_ap(sock, ifname, &ap);
 	ap_addr = (struct ether_addr *) &ap.sa_data;
 	printf("wapi_get_ap(): ret: %d", ret);
 	if (ret >= 0)
+	{
 		printf(
 			", ap: %02X:%02X:%02X:%02X:%02X:%02X",
 			ap_addr->ether_addr_octet[0],
@@ -78,64 +111,48 @@ get(int sock, const char *ifname)
 			ap_addr->ether_addr_octet[3],
 			ap_addr->ether_addr_octet[4],
 			ap_addr->ether_addr_octet[5]);
+
+#ifdef ENABLE_SET
+		/* set ap */
+		ret = wapi_set_ap(sock, ifname, &ap);
+		printf("\nwapi_set_ap(): ret: %d", ret);
+#endif
+	}
 	putchar('\n');
 
-	/* bitrate */
+	/* get bitrate */
 	ret = wapi_get_bitrate(sock, ifname, &bitrate, &bitrate_flag);
 	printf("wapi_get_bitrate(): ret: %d", ret);
 	if (ret >= 0)
+	{
 		printf(
 			", bitrate: %d, bitrate_flag: %s", bitrate,
 			wapi_bitrate_flags[bitrate_flag]);
+
+#ifdef ENABLE_SET
+		/* set bitrate */
+		ret = wapi_set_bitrate(sock, ifname, bitrate, bitrate_flag);
+		printf("\nwapi_set_bitrate(): ret: %d", ret);
+#endif
+	}
 	putchar('\n');
 
-	/* txpower */
+	/* get txpower */
 	ret = wapi_get_txpower(sock, ifname, &txpower, &txpower_flag);
 	printf("wapi_get_txpower(): ret: %d", ret);
 	if (ret >= 0)
+	{
 		printf(
 			", txpower: %d, txpower_flag: %s",
 			txpower, wapi_txpower_flags[txpower_flag]);
+
+#ifdef ENABLE_SET
+		/* set txpower */
+		ret = wapi_set_txpower(sock, ifname, txpower, txpower_flag);
+		printf("\nwapi_set_txpower(): ret: %d", ret);
+#endif
+	}
 	putchar('\n');
-}
-
-
-/**
- * Tries to alter configuration parameters of supplied @a ifname interface. Pay
- * attention that, setters require root privileges. Moreover, a majority of the
- * commodity wireless drivers provide access to alter only a particular subset
- * of the available configurations.
- */
-static void __attribute__((unused))
-set(int sock, const char *ifname)
-{
-	int ret;
-	struct sockaddr ap;
-
-	/* freq */
-	ret = wapi_set_freq(sock, ifname, 2.462e09, WAPI_FREQ_FIXED);
-	printf("wapi_set_freq(): ret: %d\n", ret);
-
-	/* essid */
-	ret = wapi_set_essid(sock, ifname, "moo", WAPI_ESSID_ON);
-	printf("wapi_set_essid(): ret: %d\n", ret);
-
-	/* mode */
-	ret = wapi_set_mode(sock, ifname, WAPI_MODE_MANAGED);
-	printf("wapi_set_mode(): ret: %d\n", ret);
-
-	/* ap */
-	wapi_make_broad_ether(&ap);
-	ret = wapi_set_ap(sock, ifname, &ap);
-	printf("wapi_set_ap(): ret: %d\n", ret);
-
-	/* bitrate */
-	ret = wapi_set_bitrate(sock, ifname, -1, WAPI_BITRATE_AUTO);
-	printf("wapi_set_bitrate(): ret: %d\n", ret);
-
-	/* txpower */
-	ret = wapi_set_txpower(sock, ifname, 20, WAPI_TXPOWER_DBM);
-	printf("wapi_set_txpower(): ret: %d\n", ret);
 }
 
 
@@ -232,18 +249,9 @@ main(int argc, char *argv[])
 	sock = wapi_make_socket();
 	printf("wapi_make_socket(): sock: %d\n", sock);
 
-	printf("\ninitial conf\n");
+	printf("\nconf\n");
 	printf("------------\n");
-	get(sock, ifname);
-
-#ifdef ENABLE_SET
-	printf("\nchanging conf...\n");
-	set(sock, ifname);
-
-	printf("\nfinal conf\n");
-	printf("----------\n");
-	get(sock, ifname);
-#endif
+	conf(sock, ifname);
 
 	printf("\nscan\n");
 	printf("----\n");
