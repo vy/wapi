@@ -21,7 +21,8 @@ wapi_get_ifnames(wapi_list_t *list)
 {
 	FILE *fp;
 	int ret;
-	char tmp[1024]; /* Can a line be longer than 1024 bytes? */
+	size_t tmpsize = WAPI_PROC_LINE_SIZE * sizeof(char);
+	char tmp[WAPI_PROC_LINE_SIZE];
 
 	WAPI_VALIDATE_PTR(list);
 
@@ -34,12 +35,12 @@ wapi_get_ifnames(wapi_list_t *list)
 	}
 
 	/* Skip first two lines. */
-	fgets(tmp, sizeof(tmp), fp);
-	fgets(tmp, sizeof(tmp), fp);
+	fgets(tmp, tmpsize, fp);
+	fgets(tmp, tmpsize, fp);
 
 	/* Iterate over available lines. */
 	ret = 0;
-	while (fgets(tmp, sizeof(tmp), fp))
+	while (fgets(tmp, tmpsize, fp))
 	{
 		char *beg;
 		char *end;
@@ -81,6 +82,8 @@ wapi_ioctl_command_name(int cmd)
 {
 	switch (cmd)
 	{
+	case SIOCADDRT:		return "SIOCADDRT";
+	case SIOCDELRT:		return "SIOCDELRT";
 	case SIOCGIFADDR:	return "SIOCGIFADDR";
 	case SIOCGIWAP:		return "SIOCGIWAP";
 	case SIOCGIWESSID:	return "SIOCGIWESSID";

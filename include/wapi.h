@@ -2,6 +2,7 @@
 #define WAPI_H
 
 
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <net/ethernet.h>
 #include <linux/wireless.h>
@@ -20,6 +21,10 @@
  * Information Systems Engineering Research Laboratory at Özyeğin
  * University)</a>.
  */
+
+
+/* Generic linked list (dummy) decleration. (No definition!) */
+typedef struct wapi_list_t wapi_list_t;
 
 
 /**
@@ -72,7 +77,7 @@ int wapi_set_ifup(int sock, const char *ifname);
 int wapi_set_ifdown(int sock, const char *ifname);
 
 
-/** @} */
+/** @} misc/ifaccessors */
 
 
 /**
@@ -85,28 +90,77 @@ int wapi_set_ifdown(int sock, const char *ifname);
 /**
  * Gets IP address of the given network interface.
  */
-int wapi_get_ip(int sock, const char *ifname, struct sockaddr *addr);
+int wapi_get_ip(int sock, const char *ifname, struct in_addr *addr);
 
 
 /**
  * Sets IP adress of the given network interface.
  */
-int wapi_set_ip(int sock, const char *ifname, const struct sockaddr *addr);
+int wapi_set_ip(int sock, const char *ifname, const struct in_addr *addr);
 
 
 /**
  * Gets netmask of the given network interface.
  */
-int wapi_get_netmask(int sock, const char *ifname, struct sockaddr *addr);
+int wapi_get_netmask(int sock, const char *ifname, struct in_addr *addr);
 
 
 /**
  * Sets netmask of the given network interface.
  */
-int wapi_set_netmask(int sock, const char *ifname, const struct sockaddr *addr);
+int wapi_set_netmask(int sock, const char *ifname, const struct in_addr *addr);
 
 
-/** @} */
+/** @} ip/ifaccessors */
+
+
+/**
+ * @defgroup route Routing Table Accessors
+ * @ingroup ifaccessors
+ * @{
+ */
+
+
+/**
+ * Parses routing table rows from @c WAPI_PROC_NET_ROUTE.
+ *
+ * @param[out] list Pushes collected @c wapi_route_info_t into this list.
+ */
+int wapi_get_routes(wapi_list_t *list);
+
+
+/** Route target types. */
+typedef enum {
+	WAPI_ROUTE_TARGET_NET,	/**< The target is a network. */
+	WAPI_ROUTE_TARGET_HOST	/**< The target is a host. */
+} wapi_route_target_t;
+
+
+/**
+ * Adds @a gateway for the given @a target network.
+ */
+int
+wapi_add_route_gw(
+	int sock,
+	wapi_route_target_t targettype,
+	const struct in_addr *target,
+	const struct in_addr *netmask,
+	const struct in_addr *gw);
+
+
+/**
+ * Deletes @a gateway for the given @a target network.
+ */
+int
+wapi_del_route_gw(
+	int sock,
+	wapi_route_target_t targettype,
+	const struct in_addr *target,
+	const struct in_addr *netmask,
+	const struct in_addr *gw);
+
+
+/** @} route/ifaccessors */
 
 
 /**
@@ -135,7 +189,7 @@ int wapi_set_netmask(int sock, const char *ifname, const struct sockaddr *addr);
 int wapi_get_we_version(int sock, const char *ifname, int *we_version);
 
 
-/** @} */
+/** @} misc/wifaccessors */
 
 
 /**
@@ -182,10 +236,10 @@ wapi_set_freq(
  *
  * @return 0, on success; -2, if not found; -1, on ioctl() failure.
  */
-int wapi_get_channel(int sock, const char *ifname, double freq, int *chan);
+int wapi_get_chan(int sock, const char *ifname, double freq, int *chan);
 
 
-/** @} */
+/** @} freq/wifaccessors */
 
 
 /**
@@ -237,7 +291,7 @@ wapi_set_essid(
 	wapi_essid_flag_t flag);
 
 
-/** @} */
+/** @} essid/wifaccessors */
 
 
 /**
@@ -275,7 +329,7 @@ int wapi_get_mode(int sock, const char *ifname, wapi_mode_t *mode);
 int wapi_set_mode(int sock, const char *ifname, wapi_mode_t mode);
 
 
-/** @} */
+/** @} mode/wifaccessors */
 
 
 /**
@@ -288,31 +342,31 @@ int wapi_set_mode(int sock, const char *ifname, wapi_mode_t mode);
 /**
  * Creates an ethernet broadcast address.
  */
-int wapi_make_broad_ether(struct sockaddr *sa);
+int wapi_make_broad_ether(struct ether_addr *sa);
 
 
 /**
  * Creates an ethernet NULL address.
  */
-int wapi_make_null_ether(struct sockaddr *sa);
+int wapi_make_null_ether(struct ether_addr *sa);
 
 
 /**
- * Gets access point address of the device. For "any", a broadcast ethernet
- * address; for "off", a null ethernet address is returned. Returned @c struct
- * sockaddr is of @c ARPHRD_ETHER family.
+ * Gets access point address of the device.
+ *
+ * @param[out] ap Set the to MAC address of the device. (For "any", a broadcast
+ *     ethernet address; for "off", a null ethernet address is used.)
  */
-int wapi_get_ap(int sock, const char *ifname, struct sockaddr *ap);
+int wapi_get_ap(int sock, const char *ifname, struct ether_addr *ap);
 
 
 /**
- * Sets access point address of the device. Supplied socket address must be of
- * @c ARPHRD_ETHER family.
+ * Sets access point address of the device.
  */
-int wapi_set_ap(int sock, const char *ifname, const struct sockaddr *ap);
+int wapi_set_ap(int sock, const char *ifname, const struct ether_addr *ap);
 
 
-/** @} */
+/** @} ap/wifaccessors */
 
 
 /**
@@ -359,7 +413,7 @@ wapi_set_bitrate(
 	wapi_bitrate_flag_t flag);
 
 
-/** @} */
+/** @} bitrate/wifaccessors */
 
 
 /**
@@ -415,51 +469,7 @@ wapi_set_txpower(
 	wapi_txpower_flag_t flag);
 
 
-/** @} */
-
-
-/**
- * @defgroup commonstructs Common Data Structures
- * @{
- */
-
-
-/** Linked list container for strings. */
-typedef struct wapi_string_t {
-	struct wapi_string_t *next;
-	char *data;
-} wapi_string_t;
-
-
-/** Linked list container for scan results. */
-typedef struct wapi_scan_info_t {
-	struct wapi_scan_info_t *next;
-	struct sockaddr *ap;
-	int has_essid;
-	char essid[WAPI_ESSID_MAX_SIZE+1];
-	wapi_essid_flag_t essid_flag;
-	int has_freq;
-	double freq;
-	int has_mode;
-	wapi_mode_t mode;
-	int has_bitrate;
-	int bitrate;
-} wapi_scan_info_t;
-
-
-/**
- * A generic linked list container. For functions taking @c wapi_list_t type of
- * argument, caller is resposible for releasing allocated memory.
- */
-typedef struct wapi_list_t {
-	union wapi_list_head_t {
-		wapi_string_t *string;
-		wapi_scan_info_t *scan;
-	} head;
-} wapi_list_t;
-
-
-/** @} */
+/** @} txpower/wifaccessors */
 
 
 /**
@@ -476,20 +486,16 @@ typedef struct wapi_list_t {
 int wapi_make_socket(void);
 
 
-/** Path to @c /proc/net/wireless. (Requires procfs mounted.) */
-#define WAPI_PROC_NET_WIRELESS "/proc/net/wireless"
-
-
 /**
  * Parses @c WAPI_PROC_NET_WIRELESS according to hardcoded mechanisms in @c
  * linux/net/wireless/wext-proc.c sources.
  *
- * @return @c zero on success.
+ * @param[out] list Pushes collected @c wapi_string_t into this list.
  */
 int wapi_get_ifnames(wapi_list_t *list);
 
 
-/** @} */
+/** @} utils */
 
 
 /**
@@ -552,7 +558,79 @@ int wapi_scan_stat(int sock, const char *ifname);
 int wapi_scan_coll(int sock, const char *ifname, wapi_list_t *aps);
 
 
-/** @} */
+/** @} scan */
+
+
+/**
+ * @defgroup commons Common Data Structures & Definitions
+ * @{
+ */
+
+
+/** Path to @c /proc/net/wireless. (Requires procfs mounted.) */
+#define WAPI_PROC_NET_WIRELESS "/proc/net/wireless"
+
+/** Path to @c /proc/net/route. (Requires procfs mounted.) */
+#define WAPI_PROC_NET_ROUTE "/proc/net/route"
+
+/** Buffer size while reading lines from MAX_PROC_ files. */
+#define WAPI_PROC_LINE_SIZE	1024
+
+
+/** Linked list container for strings. */
+typedef struct wapi_string_t {
+	struct wapi_string_t *next;
+	char *data;
+} wapi_string_t;
+
+
+/** Linked list container for scan results. */
+typedef struct wapi_scan_info_t {
+	struct wapi_scan_info_t *next;
+	struct ether_addr ap;
+	int has_essid;
+	char essid[WAPI_ESSID_MAX_SIZE+1];
+	wapi_essid_flag_t essid_flag;
+	int has_freq;
+	double freq;
+	int has_mode;
+	wapi_mode_t mode;
+	int has_bitrate;
+	int bitrate;
+} wapi_scan_info_t;
+
+
+/** Linked list container for routing table rows. */
+typedef struct wapi_route_info_t {
+	struct wapi_route_info_t *next;
+	char *ifname;
+	struct in_addr dest;
+	struct in_addr gw;
+	unsigned int flags;	/**< See @c RTF_* in @c net/route.h for available values. */
+	unsigned int refcnt;
+	unsigned int use;
+	unsigned int metric;
+	struct in_addr netmask;
+	unsigned int mtu;
+	unsigned int window;
+	unsigned int irtt;
+} wapi_route_info_t;
+
+
+/**
+ * A generic linked list container. For functions taking @c wapi_list_t type of
+ * argument, caller is resposible for releasing allocated memory.
+ */
+struct wapi_list_t {
+	union wapi_list_head_t {
+		wapi_string_t *string;
+		wapi_scan_info_t *scan;
+		wapi_route_info_t *route;
+	} head;
+};
+
+
+/** @} commons */
 
 
 #endif /* WAPI_H */

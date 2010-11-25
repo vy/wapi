@@ -137,7 +137,7 @@ wapi_set_freq(int sock, const char *ifname, double freq, wapi_freq_flag_t flag)
 
 
 int
-wapi_get_channel(int sock, const char *ifname, double freq, int *chan)
+wapi_get_chan(int sock, const char *ifname, double freq, int *chan)
 {
 	struct iwreq wrq;
 	char buf[sizeof(struct iw_range) * 2];
@@ -308,32 +308,31 @@ wapi_set_mode(int sock, const char *ifname, wapi_mode_t mode)
 /*-- Access Point ------------------------------------------------------------*/
 
 
-int
-wapi_make_broad_ether(struct sockaddr *sa)
+static int
+wapi_make_ether(struct ether_addr *addr, int byte)
 {
-	WAPI_VALIDATE_PTR(sa);
-
-	sa->sa_family = ARPHRD_ETHER;
-	memset(sa->sa_data, 0xFF, ETH_ALEN);
-
+	WAPI_VALIDATE_PTR(addr);
+	memset(addr, byte, sizeof(struct ether_addr));
 	return 0;
 }
 
 
 int
-wapi_make_null_ether(struct sockaddr *sa)
+wapi_make_broad_ether(struct ether_addr *addr)
 {
-	WAPI_VALIDATE_PTR(sa);
-
-	sa->sa_family = ARPHRD_ETHER;
-	memset(sa->sa_data, 0x00, ETH_ALEN);
-
-	return 0;
+	return wapi_make_ether(addr, 0xFF);
 }
 
 
 int
-wapi_get_ap(int sock, const char *ifname, struct sockaddr *ap)
+wapi_make_null_ether(struct ether_addr *sa)
+{
+	return wapi_make_ether(sa, 0x00);
+}
+
+
+int
+wapi_get_ap(int sock, const char *ifname, struct ether_addr *ap)
 {
 	struct iwreq wrq;
 	int ret;
@@ -342,7 +341,7 @@ wapi_get_ap(int sock, const char *ifname, struct sockaddr *ap)
 
 	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
 	if ((ret = ioctl(sock, SIOCGIWAP, &wrq)) >= 0)
-		memcpy(ap, &(wrq.u.ap_addr), sizeof(struct sockaddr));
+		memcpy(ap, wrq.u.ap_addr.sa_data, sizeof(struct ether_addr));
 	else WAPI_IOCTL_STRERROR(SIOCGIWAP);
 
 	return ret;
@@ -350,18 +349,15 @@ wapi_get_ap(int sock, const char *ifname, struct sockaddr *ap)
 
 
 int
-wapi_set_ap(int sock, const char *ifname, const struct sockaddr *ap)
+wapi_set_ap(int sock, const char *ifname, const struct ether_addr *ap)
 {
 	struct iwreq wrq;
 	int ret;
 
 	WAPI_VALIDATE_PTR(ap);
 
-	/* Socket address must be of ARPHRD_ETHER family. */
-	if (ap->sa_family != ARPHRD_ETHER)
-		return -1;
-
-	memcpy(&wrq.u.ap_addr, ap, sizeof(struct sockaddr));
+	wrq.u.ap_addr.sa_family = ARPHRD_ETHER;
+	memcpy(wrq.u.ap_addr.sa_data, ap, sizeof(struct ether_addr));
 	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
 	ret = ioctl(sock, SIOCSIWAP, &wrq);
 	if (ret < 0) WAPI_IOCTL_STRERROR(SIOCSIWAP);
@@ -639,8 +635,8 @@ wapi_scan_event(struct iw_event *event, wapi_list_t *list)
 		/* Reset it. */
 		bzero(temp, sizeof(wapi_scan_info_t));
 
-		/* Save cell identifier */
-		memcpy(&(temp->ap), &(event->u.ap_addr), sizeof(struct sockaddr));
+		/* Save cell identifier. */
+		memcpy(&temp->ap, &event->u.ap_addr.sa_data, sizeof(struct ether_addr));
 
 		/* Push it to the head of the list. */
 		temp->next = info;

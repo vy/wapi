@@ -19,50 +19,45 @@ static void
 conf(int sock, const char *ifname)
 {
 	int ret;
-	struct sockaddr addr;
+	struct in_addr addr;
 	double freq;
 	wapi_freq_flag_t freq_flag;
 	char essid[WAPI_ESSID_MAX_SIZE + 1];
 	wapi_essid_flag_t essid_flag;
 	wapi_mode_t mode;
-	struct sockaddr ap;
-	struct ether_addr *ap_addr;
+	struct ether_addr ap;
 	int bitrate;
 	wapi_bitrate_flag_t bitrate_flag;
 	int txpower;
 	wapi_txpower_flag_t txpower_flag;
 
 	/* get ip */
-	bzero(&addr, sizeof(struct sockaddr));
+	bzero(&addr, sizeof(struct in_addr));
 	ret = wapi_get_ip(sock, ifname, &addr);
 	printf("wapi_get_ip(): ret: %d", ret);
 	if (ret >= 0)
 	{
-		struct sockaddr_in sin;
-		memcpy(&sin, &addr, sizeof(struct sockaddr));
-		printf(", ip: %s", inet_ntoa(sin.sin_addr));
+		printf(", ip: %s", inet_ntoa(addr));
 
 #ifdef ENABLE_SET
 		/* set ip (Make sure sin.sin_family is set to AF_INET.) */
-		ret = wapi_set_ip(sock, ifname, (struct sockaddr *) &sin);
+		ret = wapi_set_ip(sock, ifname, &addr);
 		printf("\nwapi_set_ip(): ret: %d", ret);
 #endif
 	}
 	putchar('\n');
 
 	/* get netmask */
-	bzero(&addr, sizeof(struct sockaddr));
+	bzero(&addr, sizeof(struct in_addr));
 	ret = wapi_get_netmask(sock, ifname, &addr);
 	printf("wapi_get_netmask(): ret: %d", ret);
 	if (ret >= 0)
 	{
-		struct sockaddr_in sin;
-		memcpy(&sin, &addr, sizeof(struct sockaddr));
-		printf(", netmask: %s", inet_ntoa(sin.sin_addr));
+		printf(", netmask: %s", inet_ntoa(addr));
 
 #ifdef ENABLE_SET
 		/* set netmask (Make sure sin.sin_family is set to AF_INET.) */
-		ret = wapi_set_netmask(sock, ifname, (struct sockaddr *) &sin);
+		ret = wapi_set_netmask(sock, ifname, &addr);
 		printf("\nwapi_set_netmask(): ret: %d", ret);
 #endif
 	}
@@ -77,7 +72,7 @@ conf(int sock, const char *ifname)
 
 		printf(", freq: %g, freq_flag: %s", freq, wapi_freq_flags[freq_flag]);
 
-		ret = wapi_get_channel(sock, ifname, freq, &chan);
+		ret = wapi_get_chan(sock, ifname, freq, &chan);
 		printf("\nwapi_get_channel(): ret: %d", ret);
 		if (ret >= 0) printf(", chan: %d", chan);
 
@@ -123,18 +118,17 @@ conf(int sock, const char *ifname)
 
 	/* get ap */
 	ret = wapi_get_ap(sock, ifname, &ap);
-	ap_addr = (struct ether_addr *) &ap.sa_data;
 	printf("wapi_get_ap(): ret: %d", ret);
 	if (ret >= 0)
 	{
 		printf(
 			", ap: %02X:%02X:%02X:%02X:%02X:%02X",
-			ap_addr->ether_addr_octet[0],
-			ap_addr->ether_addr_octet[1],
-			ap_addr->ether_addr_octet[2],
-			ap_addr->ether_addr_octet[3],
-			ap_addr->ether_addr_octet[4],
-			ap_addr->ether_addr_octet[5]);
+			ap.ether_addr_octet[0],
+			ap.ether_addr_octet[1],
+			ap.ether_addr_octet[2],
+			ap.ether_addr_octet[3],
+			ap.ether_addr_octet[4],
+			ap.ether_addr_octet[5]);
 
 #ifdef ENABLE_SET
 		/* set ap */
@@ -212,7 +206,15 @@ scan(int sock, const char *ifname)
 
 	/* print found aps */
 	for (info = list.head.scan; info; info = info->next)
-		printf(">> @%xl %s\n", (size_t) info, (info->has_essid ? info->essid : ""));
+		printf(
+			">> %02x:%02x:%02x:%02x:%02x:%02x %s\n",
+			info->ap.ether_addr_octet[0],
+			info->ap.ether_addr_octet[1],
+			info->ap.ether_addr_octet[2],
+			info->ap.ether_addr_octet[3],
+			info->ap.ether_addr_octet[4],
+			info->ap.ether_addr_octet[5],
+			(info->has_essid ? info->essid : ""));
 
 	/* free ap list */
 	info = list.head.scan;
@@ -231,7 +233,7 @@ int
 main(int argc, char *argv[])
 {
 	const char *ifname;
-	wapi_list_t names;
+	wapi_list_t list;
 	int ret;
 	int sock;
 
@@ -244,8 +246,8 @@ main(int argc, char *argv[])
 	ifname = argv[1];
 
 	/* get ifnames */
-	bzero(&names, sizeof(wapi_list_t));
-	ret = wapi_get_ifnames(&names);
+	bzero(&list, sizeof(wapi_list_t));
+	ret = wapi_get_ifnames(&list);
 	printf("wapi_get_ifnames(): ret: %d", ret);
 	if (ret >= 0)
 	{
@@ -253,11 +255,11 @@ main(int argc, char *argv[])
 
 		/* print ifnames */
 		printf(", ifnames:");
-		for (str = names.head.string; str; str = str->next)
+		for (str = list.head.string; str; str = str->next)
 			printf(" %s", str->data);
 
 		/* free ifnames */
-		str = names.head.string;
+		str = list.head.string;
 		while (str)
 		{
 			wapi_string_t *tmp;
@@ -270,17 +272,48 @@ main(int argc, char *argv[])
 	}
 	putchar('\n');
 
+	/* get routes */
+	bzero(&list, sizeof(wapi_list_t));
+	ret = wapi_get_routes(&list);
+	printf("wapi_get_routes(): ret: %d\n", ret);
+	if (ret >= 0)
+	{
+		wapi_route_info_t *ri;
+
+		/* print route */
+		for (ri = list.head.route; ri; ri = ri->next)
+			printf(
+				">> dest: %s, gw: %s, netmask: %s\n",
+				inet_ntoa(ri->dest), inet_ntoa(ri->gw), inet_ntoa(ri->netmask));
+
+		/* free routes */
+		ri = list.head.route;
+		while (ri)
+		{
+			wapi_route_info_t *tmpri;
+
+			tmpri = ri->next;
+			free(ri->ifname);
+			free(ri);
+			ri = tmpri;
+		}
+	}
+
+	/* make a comm. sock. */
 	sock = wapi_make_socket();
 	printf("wapi_make_socket(): sock: %d\n", sock);
 
+	/* list conf */
 	printf("\nconf\n");
 	printf("------------\n");
 	conf(sock, ifname);
 
+	/* scan aps */
 	printf("\nscan\n");
 	printf("----\n");
 	scan(sock, ifname);
 
+	/* close comm. sock. */
 	close(sock);
 
 	return EXIT_SUCCESS;
