@@ -5,13 +5,61 @@
 
 WAPI (Wireless API) provides an easy-to-use function set to configure wireless
 network interfaces on a GNU/Linux system. One can think WAPI as a lightweight C
-API for iwconfig, wlanconfig and ifconfig commands. (But it is not a thin
-wrapper for these command line tools.) It is designed to be used in wireless
-heteregenous network research projects and supported by BWRC (Berkeley Wireless
-Research Center) and WISERLAB (Wireless Information Systems Engineering Research
-Laboratory at Özyeğin University).
+API for iwconfig, wlanconfig, ifconfig, and route commands. (But it is not a
+thin wrapper for these command line tools.) It is designed to be used in
+wireless heteregenous network research projects and supported by BWRC (Berkeley
+Wireless Research Center) and WISERLAB (Wireless Information Systems Engineering
+Research Laboratory at Özyeğin University).
 
 To get the full documentation, just type "doxygen Doxyfile" in "doc" directory.
+
+
+--- F A Q ----------------------------------------------------------------------
+
+What is WAPI?
+
+  WAPI is a C library that provides a developer friendly API to a majority of
+  the network interface configurations in a GNU/Linux system. One can think it
+  as an interface to the ifconfig, iwconfig, route, and wlanconfig command line
+  tools. But WAPI just shares the functionality of these tools, nothing more.
+  That is, instead of calling ifconfig, etc. and parsing its console outputs,
+  WAPI directly communicates with the Linux kernel via appropriate ioctl()
+  calls.
+
+What are other similar projects?
+
+  There is just iwlib of wireless-tools project, which just provides access to
+  some of the wireless network interface configurations. There are no other
+  libraries for ifconfig, route, and wlanconfig functionalities.
+
+What is wrong with iwlib?
+
+  Honestly, for the configuration of wireless network interfaces, iwlib is
+  nearly a swiss army knife. But the problem is, it is just restricted with
+  wireless network interfaces and suffers from some performance problems. (That
+  is, if you just want to change the operating frequency of your wireless device
+  and using iwlib, you must first collect all of its available configurations,
+  just update frequency in there, and write back all available configurations to
+  driver again. In other words, no attribute specific access.) And considering
+  its age, iwlib code base is bloated with backwards compatibility hacks in
+  everywhere. Being said that, WAPI still uses iwlib for some particular
+  operations. (For instance, while parsing event streams supplied by WEXT
+  module.)
+
+Does WAPI provides all available feature sets?
+
+  Ofcourse, not; at least in this point. WAPI is just designed to meet our
+  needs. If you need any other feature implementations, just drop me a mail.
+
+Ok, I heard enough. Show me some code.
+
+  Just check examples/sample.c sources. Moreover, Doxygen documentation (in doc/
+  directory) is quite satisfying as well.
+
+I found a bug. What then?
+
+  Just report me via e-mail. (A detailed explanation to reproduce the problem
+  would be awesome.) I will try to fix it ASAP.
 
 
 --- L I C E N S E --------------------------------------------------------------

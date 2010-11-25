@@ -1,3 +1,9 @@
+/**
+ * @file
+ * Public API declarations.
+ */
+
+
 #ifndef WAPI_H
 #define WAPI_H
 
@@ -13,9 +19,9 @@
  *
  * WAPI provides an easy-to-use function set to configure wireless network
  * interfaces on a GNU/Linux system. One can think WAPI as a lightweight C API
- * for @c iwconfig, @c wlanconfig and @c ifconfig commands. (But it is not a
- * thin wrapper for these command line tools.) It is designed to be used in
- * wireless heteregenous network research projects and supported by <a
+ * for @c iwconfig, @c wlanconfig, @c ifconfig, and @c route commands. (But it
+ * is not a thin wrapper for these command line tools.) It is designed to be
+ * used in wireless heteregenous network research projects and supported by <a
  * href="http://bwrc.eecs.berkeley.edu/">BWRC (Berkeley Wireless Research
  * Center)</a> and <a href="http://www.wiserlab.org/">WISERLAB (Wireless
  * Information Systems Engineering Research Laboratory at Özyeğin
@@ -573,7 +579,7 @@ int wapi_scan_coll(int sock, const char *ifname, wapi_list_t *aps);
 /** Path to @c /proc/net/route. (Requires procfs mounted.) */
 #define WAPI_PROC_NET_ROUTE "/proc/net/route"
 
-/** Buffer size while reading lines from MAX_PROC_ files. */
+/** Buffer size while reading lines from PROC_NET_ files. */
 #define WAPI_PROC_LINE_SIZE	1024
 
 

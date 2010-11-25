@@ -1,3 +1,9 @@
+/**
+ * @file
+ * Generic network interface accessors.
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <net/route.h>

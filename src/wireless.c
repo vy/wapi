@@ -1,3 +1,9 @@
+/**
+ * @file
+ * Wireless network interface accessors.
+ */
+
+
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>

@@ -1,3 +1,9 @@
+/**
+ * @file
+ * Utility routines.
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
