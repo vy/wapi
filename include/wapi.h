@@ -46,6 +46,36 @@
 
 
 /**
+ * @defgroup misc Miscellaneous Accessors
+ * @ingroup ifaccessors
+ * @{
+ */
+
+
+/**
+ * Gets the interface up status.
+ *
+ * @param[out] is_up Set to 0, if up; 1, otherwise.
+ */
+int wapi_get_ifup(int sock, const char *ifname, int *is_up);
+
+
+/**
+ * Activates the interface.
+ */
+int wapi_set_ifup(int sock, const char *ifname);
+
+
+/**
+ * Shuts down the interface.
+ */
+int wapi_set_ifdown(int sock, const char *ifname);
+
+
+/** @} */
+
+
+/**
  * @defgroup ip IP (Internet Protocol) Accessors
  * @ingroup ifaccessors
  * @{
@@ -58,11 +88,22 @@
 int wapi_get_ip(int sock, const char *ifname, struct sockaddr *addr);
 
 
-
 /**
  * Sets IP adress of the given network interface.
  */
 int wapi_set_ip(int sock, const char *ifname, const struct sockaddr *addr);
+
+
+/**
+ * Gets netmask of the given network interface.
+ */
+int wapi_get_netmask(int sock, const char *ifname, struct sockaddr *addr);
+
+
+/**
+ * Sets netmask of the given network interface.
+ */
+int wapi_set_netmask(int sock, const char *ifname, const struct sockaddr *addr);
 
 
 /** @} */
@@ -134,6 +175,14 @@ wapi_set_freq(
 	const char *ifname,
 	double freq,
 	wapi_freq_flag_t flag);
+
+
+/**
+ * Finds corresponding channel for the supplied @a freq.
+ *
+ * @return 0, on success; -2, if not found; -1, on ioctl() failure.
+ */
+int wapi_get_channel(int sock, const char *ifname, double freq, int *chan);
 
 
 /** @} */

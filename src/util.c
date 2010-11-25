@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 
 #include "wapi.h"
 #include "util.h"
@@ -68,4 +69,39 @@ wapi_get_ifnames(wapi_list_t *list)
 
 	fclose(fp);
 	return ret;
+}
+
+
+#define wapi_ioctl_command_name_bufsiz 128	/* Is fairly enough to print an integer. */
+static char wapi_ioctl_command_name_buf[wapi_ioctl_command_name_bufsiz];
+
+
+const char *
+wapi_ioctl_command_name(int cmd)
+{
+	switch (cmd)
+	{
+	case SIOCGIFADDR:	return "SIOCGIFADDR";
+	case SIOCGIWAP:		return "SIOCGIWAP";
+	case SIOCGIWESSID:	return "SIOCGIWESSID";
+	case SIOCGIWFREQ:	return "SIOCGIWFREQ";
+	case SIOCGIWMODE:	return "SIOCGIWMODE";
+	case SIOCGIWRANGE:	return "SIOCGIWRANGE";
+	case SIOCGIWRATE:	return "SIOCGIWRATE";
+	case SIOCGIWSCAN:	return "SIOCGIWSCAN";
+	case SIOCGIWTXPOW:	return "SIOCGIWTXPOW";
+	case SIOCSIFADDR:	return "SIOCSIFADDR";
+	case SIOCSIWAP:		return "SIOCSIWAP";
+	case SIOCSIWESSID:	return "SIOCSIWESSID";
+	case SIOCSIWFREQ:	return "SIOCSIWFREQ";
+	case SIOCSIWMODE:	return "SIOCSIWMODE";
+	case SIOCSIWRATE:	return "SIOCSIWRATE";
+	case SIOCSIWSCAN:	return "SIOCSIWSCAN";
+	case SIOCSIWTXPOW:	return "SIOCSIWTXPOW";
+	default:
+		snprintf(
+			wapi_ioctl_command_name_buf, wapi_ioctl_command_name_bufsiz,
+			"0x%x", cmd);
+		return wapi_ioctl_command_name_buf;
+	}
 }

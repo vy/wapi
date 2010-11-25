@@ -6,11 +6,11 @@
 #include <errno.h>
 
 
-#define WAPI_IOCTL_STRERROR(cmd)				\
-	fprintf(									\
-		stderr, "%s:%d:%s():ioctl(%s): %s\n",	\
-		__FILE__, __LINE__, __func__,			\
-		#cmd, strerror(errno))
+#define WAPI_IOCTL_STRERROR(cmd)						\
+	fprintf(											\
+		stderr, "%s:%d:%s():ioctl(%s): %s\n",			\
+		__FILE__, __LINE__, __func__,					\
+		wapi_ioctl_command_name(cmd), strerror(errno))
 
 
 #define WAPI_STRERROR(fmt, ...)					\
@@ -32,6 +32,9 @@
 		WAPI_ERROR("Null pointer: %s.\n", #ptr);	\
 		return -1;									\
 	}
+
+
+const char *wapi_ioctl_command_name(int cmd);
 
 
 #endif /* UTIL_H */

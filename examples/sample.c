@@ -19,7 +19,7 @@ static void
 conf(int sock, const char *ifname)
 {
 	int ret;
-	struct sockaddr ip;
+	struct sockaddr addr;
 	double freq;
 	wapi_freq_flag_t freq_flag;
 	char essid[WAPI_ESSID_MAX_SIZE + 1];
@@ -33,13 +33,13 @@ conf(int sock, const char *ifname)
 	wapi_txpower_flag_t txpower_flag;
 
 	/* get ip */
-	bzero(&ip, sizeof(struct sockaddr));
-	ret = wapi_get_ip(sock, ifname, &ip);
+	bzero(&addr, sizeof(struct sockaddr));
+	ret = wapi_get_ip(sock, ifname, &addr);
 	printf("wapi_get_ip(): ret: %d", ret);
 	if (ret >= 0)
 	{
 		struct sockaddr_in sin;
-		memcpy(&sin, &ip, sizeof(struct sockaddr));
+		memcpy(&sin, &addr, sizeof(struct sockaddr));
 		printf(", ip: %s", inet_ntoa(sin.sin_addr));
 
 #ifdef ENABLE_SET
@@ -50,12 +50,36 @@ conf(int sock, const char *ifname)
 	}
 	putchar('\n');
 
+	/* get netmask */
+	bzero(&addr, sizeof(struct sockaddr));
+	ret = wapi_get_netmask(sock, ifname, &addr);
+	printf("wapi_get_netmask(): ret: %d", ret);
+	if (ret >= 0)
+	{
+		struct sockaddr_in sin;
+		memcpy(&sin, &addr, sizeof(struct sockaddr));
+		printf(", netmask: %s", inet_ntoa(sin.sin_addr));
+
+#ifdef ENABLE_SET
+		/* set netmask (Make sure sin.sin_family is set to AF_INET.) */
+		ret = wapi_set_netmask(sock, ifname, (struct sockaddr *) &sin);
+		printf("\nwapi_set_netmask(): ret: %d", ret);
+#endif
+	}
+	putchar('\n');
+
 	/* get freq */
 	ret = wapi_get_freq(sock, ifname, &freq, &freq_flag);
 	printf("wapi_get_freq(): ret: %d", ret);
 	if (ret >= 0)
 	{
+		int chan;
+
 		printf(", freq: %g, freq_flag: %s", freq, wapi_freq_flags[freq_flag]);
+
+		ret = wapi_get_channel(sock, ifname, freq, &chan);
+		printf("\nwapi_get_channel(): ret: %d", ret);
+		if (ret >= 0) printf(", chan: %d", chan);
 
 #ifdef ENABLE_SET
 		/* set freq */
@@ -256,6 +280,8 @@ main(int argc, char *argv[])
 	printf("\nscan\n");
 	printf("----\n");
 	scan(sock, ifname);
+
+	close(sock);
 
 	return EXIT_SUCCESS;
 }
