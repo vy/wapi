@@ -69,12 +69,17 @@ conf(int sock, const char *ifname)
 	if (ret >= 0)
 	{
 		int chan;
+		double tmpfreq;
 
 		printf(", freq: %g, freq_flag: %s", freq, wapi_freq_flags[freq_flag]);
 
-		ret = wapi_get_chan(sock, ifname, freq, &chan);
-		printf("\nwapi_get_channel(): ret: %d", ret);
+		ret = wapi_freq2chan(sock, ifname, freq, &chan);
+		printf("\nwapi_freq2chan(): ret: %d", ret);
 		if (ret >= 0) printf(", chan: %d", chan);
+
+		ret = wapi_chan2freq(sock, ifname, chan, &tmpfreq);
+		printf("\nwapi_chan2freq(): ret: %d", ret);
+		if (ret >= 0) printf(", freq: %g", tmpfreq);
 
 #ifdef ENABLE_SET
 		/* set freq */

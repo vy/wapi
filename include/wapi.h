@@ -225,9 +225,17 @@ wapi_set_freq(
 /**
  * Finds corresponding channel for the supplied @a freq.
  *
- * @return 0, on success; -2, if not found; -1, on ioctl() failure.
+ * @return 0, on success; -2, if not found; otherwise, ioctl() return value.
  */
-int wapi_get_chan(int sock, const char *ifname, double freq, int *chan);
+int wapi_freq2chan(int sock, const char *ifname, double freq, int *chan);
+
+
+/**
+ * Finds corresponding frequency for the supplied @a chan.
+ *
+ * @return 0, on success; -2, if not found; otherwise, ioctl() return value.
+ */
+int wapi_chan2freq(int sock, const char *ifname, int chan, double *freq);
 
 
 /** @} freq/wifaccessors */

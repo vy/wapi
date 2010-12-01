@@ -150,7 +150,7 @@ wapi_set_freq(int sock, const char *ifname, double freq, wapi_freq_flag_t flag)
 
 
 int
-wapi_get_chan(int sock, const char *ifname, double freq, int *chan)
+wapi_freq2chan(int sock, const char *ifname, double freq, int *chan)
 {
 	struct iwreq wrq;
 	char buf[sizeof(struct iw_range) * 2];
@@ -177,6 +177,44 @@ wapi_get_chan(int sock, const char *ifname, double freq, int *chan)
 			if (freq == wapi_freq2float(&(range->freq[k])))
 			{
 				*chan = range->freq[k].i;
+				return 0;
+			}
+
+		/* Oops! Nothing found. */
+		ret = -2;
+	}
+	else WAPI_IOCTL_STRERROR(SIOCGIWRANGE);
+
+	return ret;
+}
+
+
+int
+wapi_chan2freq(int sock, const char *ifname, int chan, double *freq)
+{
+	struct iwreq wrq;
+	char buf[sizeof(struct iw_range) * 2];
+	int ret;
+
+	WAPI_VALIDATE_PTR(freq);
+
+	/* Prepare request. */
+	bzero(buf, sizeof(buf));
+	wrq.u.data.pointer = buf;
+	wrq.u.data.length = sizeof(buf);
+	wrq.u.data.flags = 0;
+
+	/* Get range. */
+	strncpy(wrq.ifr_name, ifname, IFNAMSIZ);
+	if ((ret = ioctl(sock, SIOCGIWRANGE, &wrq)) >= 0)
+	{
+		struct iw_range *range = (struct iw_range *) buf;
+		int k;
+
+		for (k = 0; k < range->num_frequency; k++)
+			if (chan == range->freq[k].i)
+			{
+				*freq = wapi_freq2float(&(range->freq[k]));
 				return 0;
 			}
 
