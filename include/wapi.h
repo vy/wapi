@@ -14,21 +14,6 @@
 #include <linux/wireless.h>
 
 
-/**
- * @mainpage Wireless API (WAPI)
- *
- * WAPI provides an easy-to-use function set to configure wireless network
- * interfaces on a GNU/Linux system. One can think WAPI as a lightweight C API
- * for @c iwconfig, @c wlanconfig, @c ifconfig, and @c route commands. (But it
- * is not a thin wrapper for these command line tools.) It is designed to be
- * used in wireless heteregenous network research projects and supported by <a
- * href="http://bwrc.eecs.berkeley.edu/">BWRC (Berkeley Wireless Research
- * Center)</a> and <a href="http://www.wiserlab.org/">WISERLAB (Wireless
- * Information Systems Engineering Research Laboratory at Özyeğin
- * University)</a>.
- */
-
-
 /* Generic linked list (dummy) decleration. (No definition!) */
 typedef struct wapi_list_t wapi_list_t;
 
@@ -476,6 +461,36 @@ wapi_set_txpower(
 
 
 /** @} txpower/wifaccessors */
+
+
+/**
+ * @defgroup ifadddel Add/Delete Virtual Interfaces
+ * @ingroup wifaccessors
+ *
+ * nl80211 routines to add/delete virtual interfaces. Some of these features
+ * require dedicated hardware to work properly. Since these features utilize
+ * nl80211 interface, @c sock arguments are there just for the function
+ * footprint uniformness purposes, hence are ignored totally.
+ *
+ * @{
+ */
+
+
+/**
+ * Creates a virtual interface with @a name for interface @a ifname.
+ */
+int
+wapi_if_add(int sock, const char *ifname, const char *name, wapi_mode_t mode);
+
+
+/**
+ * Deletes a virtual interface with @a name.
+ */
+int
+wapi_if_del(int sock, const char *ifname);
+
+
+/** @} ifadddel/wifaccessors */
 
 
 /**

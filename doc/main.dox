@@ -1,0 +1,81 @@
+/**
+
+@mainpage Wireless API (WAPI)
+
+WAPI provides an easy-to-use function set to configure wireless network
+interfaces in a GNU/Linux system. One can think WAPI as a lightweight C API for
+@c iwconfig, @c wlanconfig, @c ifconfig, and @c route commands. (But it is not a
+thin wrapper for these command line tools.) It is designed to be used in
+wireless heteregenous network research projects and supported by <a
+href="http://bwrc.eecs.berkeley.edu/">BWRC (Berkeley Wireless Research
+Center)</a> and <a href="http://www.wiserlab.org/">WISERLAB (Wireless
+Information Systems Engineering Research Laboratory at Özyeğin University)</a>.
+
+For @c iwconfig, @c ifconfig, and @c route command functionalities, WAPI issues
+same set of ioctl() calls to the netlink kernel. While @c ifconfig and @c route
+doesn't have that many ad-hoc hacks for backward compatibility issues, @c
+iwconfig is messed with dozens of such stuff in all around the code. In WAPI, we
+try to avoid all such hacks and target recent hardware and kernel versions
+(>2.6). But most of the time, it should just work fine. For virtual (wireless)
+interface management, we rely on <a
+href="http://linuxwireless.org/en/developers/Documentation/nl80211">nl80211</a>
+netlink interface. (Which is actually intended to replace Wireless Extensions.)
+
+
+@section faq Frequently Asked Questions
+
+
+@subsection whatiswapi What is WAPI?
+
+WAPI is a C library that provides a developer friendly API to a majority of the
+network interface configurations in a GNU/Linux system. One can think it as an
+interface to the ifconfig, iwconfig, route, and wlanconfig command line tools.
+But WAPI just shares the functionality of these tools, nothing more. That is,
+instead of calling ifconfig, etc. and parsing its console output, WAPI directly
+communicates with the Linux kernel via appropriate ioctl() and nl80211 interface
+calls.
+
+
+@subsection whatareothers What are other similar projects?
+
+There is just iwlib of wireless-tools project, which just provides access to
+some of the wireless network interface configurations. There are no other
+libraries for ifconfig, route, and wlanconfig functionalities.
+
+@subsection whatisiwlib What is wrong with iwlib?
+
+Honestly, for the configuration of wireless network interfaces, iwlib is nearly
+a swiss army knife. But the problem is, it is just restricted to wireless
+network interfaces and suffers from some performance problems. (That is, if you
+just want to change the operating frequency of your wireless device and using
+iwlib, you must first collect all of its available configurations, just update
+frequency in there, and write back all available configurations to driver again.
+In other words, no attribute specific access.) And considering its age, iwlib
+code base is bloated with backwards compatibility hacks in everywhere. Being
+said that, WAPI still uses iwlib for some particular operations. (For instance,
+while parsing event streams supplied by WEXT module.)
+
+@subsection whatisnl80211 Why not using nl80211?
+
+nl80211 is the new 802.11 netlink interface for Linux kernel. For particular
+feature sets (e.g. virtual interface management) we rely on nl80211. While
+nl80211 is quite mature, it doesn't support as many devices as wext does. But it
+would be a good TODO item to port all wireless interface related ioctl() calls
+to their nl80211 correspondents.
+
+@subsection wapifeatures Does WAPI provides all available feature sets?
+
+Ofcourse, not. (At least not at this point.) WAPI is just designed to meet our
+research needs. If you need any other feature implementations, just drop me a
+mail.
+
+@subsection showmecode Ok, I heard enough. Show me some code.
+
+Just check source files under @c examples directory.
+
+@subsection foundbug I found a bug. What then?
+
+Just report me via e-mail. (A detailed explanation to reproduce the problem
+would be awesome.) I will try to fix it ASAP.
+
+*/

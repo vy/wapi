@@ -2,6 +2,7 @@
 examples/*.o
 examples/*.so
 gmon.out
+doc/html
 lib/*
 semantic.cache
 src/*.o

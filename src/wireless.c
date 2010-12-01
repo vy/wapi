@@ -8,6 +8,13 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include <linux/nl80211.h>
+#include <netlink/genl/genl.h>
+#include <netlink/genl/family.h>
+#include <netlink/genl/ctrl.h>
+#include <netlink/msg.h>
+#include <netlink/attr.h>
+
 #include "iwlib.h"
 #include "wapi.h"
 #include "util.h"
@@ -767,4 +774,227 @@ alloc:
 	free(buf);
 
 	return ret;
+}
+
+
+/*-- Add/Del Interface -------------------------------------------------------*/
+
+
+typedef enum {
+	WAPI_NL80211_CMD_IFADD,
+	WAPI_NL80211_CMD_IFDEL
+} wapi_nl80211_cmd_t;
+
+
+typedef struct wapi_nl80211_ifadd_ctx_t {
+	const char *name;
+	wapi_mode_t mode;
+} wapi_nl80211_ifadd_ctx_t;
+
+
+typedef struct wapi_nl80211_ifdel_ctx_t {
+} wapi_nl80211_ifdel_ctx_t;
+
+
+typedef struct wapi_nl80211_ctx_t {
+	const char *ifname;
+	wapi_nl80211_cmd_t cmd;
+	union {
+		wapi_nl80211_ifadd_ctx_t ifadd;
+		wapi_nl80211_ifdel_ctx_t ifdel;
+	} u;
+} wapi_nl80211_ctx_t;
+
+
+static int
+wapi_mode_to_iftype(wapi_mode_t mode, enum nl80211_iftype *type)
+{
+	int ret = 0;
+
+	switch (mode)
+	{
+	case WAPI_MODE_AUTO:	*type = NL80211_IFTYPE_UNSPECIFIED;	break;
+	case WAPI_MODE_ADHOC:	*type = NL80211_IFTYPE_ADHOC;		break;
+	case WAPI_MODE_MANAGED:	*type = NL80211_IFTYPE_STATION;		break;
+	case WAPI_MODE_MASTER:	*type = NL80211_IFTYPE_AP;			break;
+	case WAPI_MODE_MONITOR:	*type = NL80211_IFTYPE_MONITOR;		break;
+	default:
+		WAPI_ERROR(
+			"No supported nl80211 iftype for mode: %s!\n",
+			wapi_modes[mode]);
+		ret = -1;
+	}
+
+	return ret;
+}
+
+
+static int
+nl80211_err_handler(struct sockaddr_nl *nla, struct nlmsgerr *err, void *arg)
+{
+	int *ret = arg;
+	*ret = err->error;
+	return NL_STOP;
+}
+
+
+static int
+nl80211_fin_handler(struct nl_msg *msg, void *arg)
+{
+	int *ret = arg;
+	*ret = 0;
+	return NL_SKIP;
+}
+
+
+static int
+nl80211_ack_handler(struct nl_msg *msg, void *arg)
+{
+	int *ret = arg;
+	*ret = 0;
+	return NL_STOP;
+}
+
+
+static int
+nl80211_cmd_handler(const wapi_nl80211_ctx_t *ctx)
+{
+	struct nl_sock *sock;
+	struct nl_msg *msg;
+	struct nl_cb *cb;
+	int family;
+	int ifidx;
+	int ret;
+
+	/* Allocate netlink socket. */
+	sock = nl_socket_alloc();
+	if (!sock)
+	{
+		WAPI_ERROR("Failed to allocate netlink socket!\n");
+		return -ENOMEM;
+	}
+
+	/* Connect to generic netlink socket on kernel side. */
+	if (genl_connect(sock))
+	{
+		WAPI_ERROR("Failed to connect to generic netlink!\n");
+		ret = -ENOLINK;
+		goto exit;
+	}
+
+	/* Ask kernel to resolve family name to family id. */
+	ret = family = genl_ctrl_resolve(sock, "nl80211");
+	if (ret < 0)
+	{
+		WAPI_ERROR("genl_ctrl_resolve() failed!\n");
+		goto exit;
+	}
+
+	/* Map given network interface name (ifname) to its corresponding index. */
+	ifidx = if_nametoindex(ctx->ifname);
+	if (!ifidx)
+	{
+		WAPI_STRERROR("if_nametoindex(\"%s\")", ctx->ifname);
+		ret = -errno;
+		goto exit;
+	}
+
+	/* Construct a generic netlink by allocating a new message. */
+	msg = nlmsg_alloc();
+	if (!msg)
+	{
+		WAPI_ERROR("nlmsg_alloc() failed!\n");
+		ret = -ENOMEM;
+		goto exit;
+	}
+
+	/* Append the requested command to the message. */
+	switch (ctx->cmd)
+	{
+	case WAPI_NL80211_CMD_IFADD:
+	{
+		enum nl80211_iftype iftype;
+
+		genlmsg_put(
+			msg, NL_AUTO_PID, NL_AUTO_SEQ, family, 0, 0,
+			NL80211_CMD_NEW_INTERFACE, 0);
+		NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, ifidx);
+
+		/* Get NL80211_IFTYPE_* for the given WAPI mode. */
+		ret = wapi_mode_to_iftype(ctx->u.ifadd.mode, &iftype);
+		if (ret < 0) goto exit;
+
+		NLA_PUT_STRING(msg, NL80211_ATTR_IFNAME, ctx->u.ifadd.name);
+		NLA_PUT_U32(msg, NL80211_ATTR_IFTYPE, iftype);
+
+		break;
+	}
+
+	case WAPI_NL80211_CMD_IFDEL:
+		genlmsg_put(
+			msg, NL_AUTO_PID, NL_AUTO_SEQ, family, 0, 0,
+			NL80211_CMD_DEL_INTERFACE, 0);
+		NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, ifidx);
+		break;
+	}
+
+	/* Finalize (send) the message. */
+	ret = nl_send_auto_complete(sock, msg);
+	if (ret < 0)
+	{
+		WAPI_ERROR("nl_send_auto_complete() failed!\n");
+		goto exit;
+	}
+
+	/* Allocate a new callback handle. */
+	cb = nl_cb_alloc(NL_CB_VERBOSE);
+	if (!cb)
+	{
+		WAPI_ERROR("nl_cb_alloc() failed\n");
+		ret = -1;
+		goto exit;
+	}
+
+	/* Configure callback handlers. */
+	nl_cb_err(cb, NL_CB_CUSTOM, nl80211_err_handler, &ret);
+	nl_cb_set(cb, NL_CB_FINISH, NL_CB_CUSTOM, nl80211_fin_handler, &ret);
+	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, nl80211_ack_handler, &ret);
+
+	/* Consume netlink replies. */
+	for (ret = 1; ret > 0; ) nl_recvmsgs(sock, cb);
+	if (ret) WAPI_ERROR("nl_recvmsgs() failed!\n");
+
+exit:
+	/* Release resources and exit with "ret". */
+	nl_socket_free(sock);
+	if (msg) nlmsg_free(msg);
+	if (cb) free(cb);
+	return ret;
+
+nla_put_failure:
+	WAPI_ERROR("nla_put_failure!\n");
+	ret = -1;
+	goto exit;
+}
+
+
+int
+wapi_if_add(int sock, const char *ifname, const char *name, wapi_mode_t mode)
+{
+	wapi_nl80211_ctx_t ctx;
+	ctx.ifname = ifname;
+	ctx.cmd = WAPI_NL80211_CMD_IFADD;
+	ctx.u.ifadd.name = name;
+	ctx.u.ifadd.mode = mode;
+	return nl80211_cmd_handler(&ctx);
+}
+
+
+int
+wapi_if_del(int sock, const char *ifname)
+{
+	wapi_nl80211_ctx_t ctx;
+	ctx.ifname = ifname;
+	ctx.cmd = WAPI_NL80211_CMD_IFDEL;
+	return nl80211_cmd_handler(&ctx);
 }

@@ -53,10 +53,10 @@ env.Append(CCFLAGS = getenv('CFLAGS', ''))
 env.Append(LINKFLAGS = getenv('LDFLAGS', ''))
 
 
-### Main #######################################################################
+### WAPI #######################################################################
 
 common_srcs = map(to_src_path, ['util.c', 'network.c', 'wireless.c'])
-common_libs = ["libiw"]
+common_libs = ["libiw", "libnl", "libnl-genl"]
 
 src = env.Clone()
 src.Append(CPPPATH = [SRCDIR])
@@ -65,6 +65,9 @@ src.SharedLibrary(
     opj(LIBDIR, 'wapi'),
     map(src.SharedObject, common_srcs),
     LIBS = common_libs)
+
+
+### Examples ###################################################################
 
 exa = env.Clone()
 exa.Append(CCFLAGS = '-fno-strict-aliasing')
@@ -75,4 +78,12 @@ exa.Program(
 
 exa.Program(
     opj(EXADIR, 'sample-set.c'),
+    LIBS = common_libs + ["libwapi"])
+
+exa.Program(
+    opj(EXADIR, 'ifadd.c'),
+    LIBS = common_libs + ["libwapi"])
+
+exa.Program(
+    opj(EXADIR, 'ifdel.c'),
     LIBS = common_libs + ["libwapi"])
