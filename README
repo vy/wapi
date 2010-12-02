@@ -12,6 +12,10 @@ wireless heteregenous network research projects and supported by BWRC (Berkeley
 Wireless Research Center) and WISERLAB (Wireless Information Systems Engineering
 Research Laboratory at Özyeğin University).
 
+For source codes, see http://github.com/vy/wapi. While you can manually generate
+the documentation via Doxygen, the most recent version of the documentation is
+(hopefully) always available at http://vy.github.com/wapi.
+
 
 --- L I C E N S E --------------------------------------------------------------
 
