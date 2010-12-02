@@ -2,14 +2,15 @@
 
 @mainpage Wireless API (WAPI)
 
-WAPI provides an easy-to-use function set to configure wireless network
-interfaces in a GNU/Linux system. One can think WAPI as a lightweight C API for
-@c iwconfig, @c wlanconfig, @c ifconfig, and @c route commands. (But it is not a
-thin wrapper for these command line tools.) It is designed to be used in
-wireless heteregenous network research projects and supported by <a
-href="http://bwrc.eecs.berkeley.edu/">BWRC (Berkeley Wireless Research
-Center)</a> and <a href="http://www.wiserlab.org/">WISERLAB (Wireless
-Information Systems Engineering Research Laboratory at Özyeğin University)</a>.
+<a href="http://github.com/vy/wapi">WAPI</a> provides an easy-to-use function
+set to configure wireless network interfaces in a GNU/Linux system. One can
+think WAPI as a lightweight C API for @c iwconfig, @c wlanconfig, @c ifconfig,
+and @c route commands. (But it is not a thin wrapper for these command line
+tools.) It is designed to be used in wireless heteregenous network research
+projects and supported by <a href="http://bwrc.eecs.berkeley.edu/">BWRC
+(Berkeley Wireless Research Center)</a> and <a
+href="http://www.wiserlab.org/">WISERLAB (Wireless Information Systems
+Engineering Research Laboratory at Özyeğin University)</a>.
 
 For @c iwconfig, @c ifconfig, and @c route command functionalities, WAPI issues
 same set of ioctl() calls to the netlink kernel. While @c ifconfig and @c route
