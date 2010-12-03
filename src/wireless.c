@@ -845,6 +845,23 @@ typedef struct wapi_nl80211_ctx_t {
 } wapi_nl80211_ctx_t;
 
 
+#ifdef LIBNL1
+#define nl_sock nl_handle
+
+
+static struct nl_handle *nl_socket_alloc(void)
+{
+	return nl_handle_alloc();
+}
+
+
+static void nl_socket_free(struct nl_sock *h)
+{
+	nl_handle_destroy(h);
+}
+#endif
+
+
 static int
 wapi_mode_to_iftype(wapi_mode_t mode, enum nl80211_iftype *type)
 {
@@ -912,6 +929,10 @@ nl80211_cmd_handler(const wapi_nl80211_ctx_t *ctx)
 		WAPI_ERROR("Failed to allocate netlink socket!\n");
 		return -ENOMEM;
 	}
+
+	/* Reset "msg" and "cb". */
+	msg = NULL;
+	cb = NULL;
 
 	/* Connect to generic netlink socket on kernel side. */
 	if (genl_connect(sock))

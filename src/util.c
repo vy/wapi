@@ -41,8 +41,11 @@ wapi_get_ifnames(wapi_list_t *list)
 	}
 
 	/* Skip first two lines. */
-	fgets(tmp, tmpsize, fp);
-	fgets(tmp, tmpsize, fp);
+	if (!fgets(tmp, tmpsize, fp) || ! fgets(tmp, tmpsize, fp))
+	{
+		WAPI_ERROR("Invalid \"%s\" content!\n", WAPI_PROC_NET_WIRELESS);
+		return -1;
+	}
 
 	/* Iterate over available lines. */
 	ret = 0;

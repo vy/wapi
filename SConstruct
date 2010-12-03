@@ -1,6 +1,6 @@
 from os.path import join as opj
 from os import getenv
-from sys import stdout
+from sys import stderr, stdout
 
 
 ### Common Variables ###########################################################
@@ -49,15 +49,16 @@ env.Append(CPPPATH = [INCDIR])
 env.Append(LIBPATH = LIBDIR)
 
 
-### Set Compiler Flags #########################################################
+### Parse Environment Variables ################################################
 
 env.Append(CCFLAGS = getenv('CFLAGS', ''))
+env.Append(CCFLAGS = '-fno-strict-aliasing')
 env.Append(LINKFLAGS = getenv('LDFLAGS', ''))
 
 
 ### Library/Header Check #######################################################
 
-common_libs = ['m', 'iw', 'nl', 'nl-genl']
+common_libs = ['m', 'iw']
 common_hdrs = [
     'ctype.h',
     'errno.h',
@@ -79,6 +80,24 @@ common_hdrs = [
     'sys/types.h',
     ]
 
+def CheckPkgConfig(ctx):
+     ctx.Message('Checking for pkg-config... ')
+     ret = ctx.TryAction('pkg-config pkg-config')[0]
+     ctx.Result(ret)
+     return ret
+
+def CheckPkg(ctx, pkg, ver):
+     ctx.Message('Checking for package %s... ' % pkg)
+     ret = ctx.TryAction('pkg-config --atleast-version=%s %s' % (ver, pkg))[0]
+     ctx.Result(ret)
+     return ret
+
+conf = Configure(
+        env,
+        custom_tests = {
+            'CheckPkgConfig': CheckPkgConfig,
+            'CheckPkg': CheckPkg})
+
 def require_lib(lib):
     if not conf.CheckLib(lib):
         Exit(1)
@@ -87,42 +106,48 @@ def require_hdr(hdr):
     if not conf.CheckCHeader(hdr):
         Exit(1)
 
+src = env.Clone()	# Library sources.
+exa = env.Clone()	# Examples.
+
 if not env.GetOption('clean') and env['check']:
-    conf = Configure(env)
-    map(require_lib, common_libs)
+    # Checking common libraries.
     map(require_hdr, common_hdrs)
+    map(require_lib, common_libs)
+
+# Check pkg-config.
+if not conf.CheckPkgConfig():
+    stderr.write("pkg-config is missing!\n")
+    Exit(1)
+
+# Configuring nl80211.
+if conf.CheckPkg('libnl-1', '1'):
+    src.ParseConfig('pkg-config --libs --cflags libnl-1')
+    src.Append(CCFLAGS = '-DLIBNL1')
+elif conf.CheckPkg('libnl-2.0', '2'):
+    src.ParseConfig('pkg-config --libs --cflags libnl-2.0')
+    src.Append(CCFLAGS = '-DLIBNL2')
+else:
+    stderr.write('libnl could not be found!')
+    Exit(1)
 
 
 ### Compile WAPI ###############################################################
 
 common_srcs = map(to_src_path, ['util.c', 'network.c', 'wireless.c'])
 
-src = env.Clone()
+src.Append(LIBS = common_libs)
 src.Append(CPPPATH = [SRCDIR])
 
 src.SharedLibrary(
     opj(LIBDIR, 'wapi'),
-    map(src.SharedObject, common_srcs),
-    LIBS = common_libs)
+    map(src.SharedObject, common_srcs))
 
 
 ### Compile Examples ###########################################################
 
-exa = env.Clone()
-exa.Append(CCFLAGS = '-fno-strict-aliasing')
+exa.Append(LIBS = ["wapi"])
 
-exa.Program(
-    opj(EXADIR, 'sample-get.c'),
-    LIBS = common_libs + ["wapi"])
-
-exa.Program(
-    opj(EXADIR, 'sample-set.c'),
-    LIBS = common_libs + ["wapi"])
-
-exa.Program(
-    opj(EXADIR, 'ifadd.c'),
-    LIBS = common_libs + ["wapi"])
-
-exa.Program(
-    opj(EXADIR, 'ifdel.c'),
-    LIBS = common_libs + ["wapi"])
+exa.Program(opj(EXADIR, 'sample-get.c'))
+exa.Program(opj(EXADIR, 'sample-set.c'))
+exa.Program(opj(EXADIR, 'ifadd.c'))
+exa.Program(opj(EXADIR, 'ifdel.c'))

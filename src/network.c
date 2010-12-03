@@ -165,7 +165,11 @@ wapi_get_routes(wapi_list_t *list)
 	}
 
 	/* Skip header line. */
-	fgets(buf, bufsiz, fp);
+	if (!fgets(buf, bufsiz, fp))
+	{
+		WAPI_ERROR("Invalid \"%s\" content!\n", WAPI_PROC_NET_ROUTE);
+		return -1;
+	}
 
 	/* Read lines. */
 	ret = 0;
