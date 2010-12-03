@@ -61,6 +61,7 @@ common_libs = ['m', 'iw', 'nl', 'nl-genl']
 common_hdrs = [
     'ctype.h',
     'errno.h',
+    'iwlib.h',
     'linux/nl80211.h',
     'math.h',
     'netinet/in.h',
@@ -78,10 +79,18 @@ common_hdrs = [
     'sys/types.h',
     ]
 
+def require_lib(lib):
+    if not conf.CheckLib(lib):
+        Exit(1)
+
+def require_hdr(hdr):
+    if not conf.CheckCHeader(hdr):
+        Exit(1)
+
 if not env.GetOption('clean') and env['check']:
     conf = Configure(env)
-    map(conf.CheckLib, common_libs)
-    map(conf.CheckCHeader, common_hdrs)
+    map(require_lib, common_libs)
+    map(require_hdr, common_hdrs)
 
 
 ### Compile WAPI ###############################################################

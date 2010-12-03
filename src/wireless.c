@@ -15,7 +15,8 @@
 #include <netlink/msg.h>
 #include <netlink/attr.h>
 
-#include "iwlib.h"
+#include <iwlib.h>
+
 #include "wapi.h"
 #include "util.h"
 
