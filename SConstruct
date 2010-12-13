@@ -109,26 +109,25 @@ def require_hdr(hdr):
 src = env.Clone()	# Library sources.
 exa = env.Clone()	# Examples.
 
-if not env.GetOption('clean') and env['check']:
-    # Checking common libraries.
-    map(require_hdr, common_hdrs)
-    map(require_lib, common_libs)
-
-# Check pkg-config.
-if not conf.CheckPkgConfig():
-    stderr.write("pkg-config is missing!\n")
-    Exit(1)
-
-# Configuring nl80211.
-if conf.CheckPkg('libnl-1', '1'):
-    src.ParseConfig('pkg-config --libs --cflags libnl-1')
-    src.Append(CCFLAGS = '-DLIBNL1')
-elif conf.CheckPkg('libnl-2.0', '2'):
-    src.ParseConfig('pkg-config --libs --cflags libnl-2.0')
-    src.Append(CCFLAGS = '-DLIBNL2')
-else:
-    stderr.write('libnl could not be found!')
-    Exit(1)
+if not env.GetOption('clean'):
+    if env['check']:
+        # Checking common libraries.
+        map(require_hdr, common_hdrs)
+        map(require_lib, common_libs)
+        # Check pkg-config.
+        if not conf.CheckPkgConfig():
+            stderr.write("pkg-config is missing!\n")
+            Exit(1)
+    # Configuring nl80211.
+    if conf.CheckPkg('libnl-1', '1'):
+        src.ParseConfig('pkg-config --libs --cflags libnl-1')
+        src.Append(CCFLAGS = '-DLIBNL1')
+    elif conf.CheckPkg('libnl-2.0', '2'):
+        src.ParseConfig('pkg-config --libs --cflags libnl-2.0')
+        src.Append(CCFLAGS = '-DLIBNL2')
+    else:
+        stderr.write('libnl could not be found!')
+        Exit(1)
 
 
 ### Compile WAPI ###############################################################
