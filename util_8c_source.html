@@ -78,82 +78,85 @@
 <a name="l00041"></a>00041     }
 <a name="l00042"></a>00042 
 <a name="l00043"></a>00043     <span class="comment">/* Skip first two lines. */</span>
-<a name="l00044"></a>00044     fgets(tmp, tmpsize, fp);
-<a name="l00045"></a>00045     fgets(tmp, tmpsize, fp);
-<a name="l00046"></a>00046 
-<a name="l00047"></a>00047     <span class="comment">/* Iterate over available lines. */</span>
-<a name="l00048"></a>00048     ret = 0;
-<a name="l00049"></a>00049     <span class="keywordflow">while</span> (fgets(tmp, tmpsize, fp))
-<a name="l00050"></a>00050     {
-<a name="l00051"></a>00051         <span class="keywordtype">char</span> *beg;
-<a name="l00052"></a>00052         <span class="keywordtype">char</span> *end;
-<a name="l00053"></a>00053         <a class="code" href="structwapi__string__t.html" title="Linked list container for strings.">wapi_string_t</a> *string;
-<a name="l00054"></a>00054 
-<a name="l00055"></a>00055         <span class="comment">/* Locate the interface name region. */</span>
-<a name="l00056"></a>00056         <span class="keywordflow">for</span> (beg = tmp; *beg &amp;&amp; isspace(*beg); beg++);
-<a name="l00057"></a>00057         <span class="keywordflow">for</span> (end = beg; *end &amp;&amp; *end != <span class="charliteral">&#39;:&#39;</span>; end++);
-<a name="l00058"></a>00058 
-<a name="l00059"></a>00059         <span class="comment">/* Allocate both wapi_string_t and char vector. */</span>
-<a name="l00060"></a>00060         <span class="keywordtype">string</span> = malloc(<span class="keyword">sizeof</span>(<a class="code" href="structwapi__string__t.html" title="Linked list container for strings.">wapi_string_t</a>));
-<a name="l00061"></a>00061         <span class="keywordflow">if</span> (<span class="keywordtype">string</span>) <span class="keywordtype">string</span>-&gt;data = malloc(end - beg + <span class="keyword">sizeof</span>(<span class="keywordtype">char</span>));
-<a name="l00062"></a>00062         <span class="keywordflow">if</span> (!<span class="keywordtype">string</span> || !string-&gt;<a class="code" href="structwapi__string__t.html#aed12f4bf6977aae0ba7898c0869f5495">data</a>)
-<a name="l00063"></a>00063         {
-<a name="l00064"></a>00064             <a class="code" href="util_8h.html#ac33bd57679c89a7aed0e5e4cc1787446">WAPI_STRERROR</a>(<span class="stringliteral">&quot;malloc()&quot;</span>);
-<a name="l00065"></a>00065             ret = -1;
-<a name="l00066"></a>00066             <span class="keywordflow">break</span>;
-<a name="l00067"></a>00067         }
-<a name="l00068"></a>00068 
-<a name="l00069"></a>00069         <span class="comment">/* Copy region into the buffer. */</span>
-<a name="l00070"></a>00070         snprintf(string-&gt;<a class="code" href="structwapi__string__t.html#aed12f4bf6977aae0ba7898c0869f5495">data</a>, (end - beg + <span class="keyword">sizeof</span>(<span class="keywordtype">char</span>)), <span class="stringliteral">&quot;%s&quot;</span>, beg);
+<a name="l00044"></a>00044     <span class="keywordflow">if</span> (!fgets(tmp, tmpsize, fp) || ! fgets(tmp, tmpsize, fp))
+<a name="l00045"></a>00045     {
+<a name="l00046"></a>00046         <a class="code" href="util_8h.html#a4743e050a52e7cc8907745d4e8f49189">WAPI_ERROR</a>(<span class="stringliteral">&quot;Invalid \&quot;%s\&quot; content!\n&quot;</span>, <a class="code" href="group__commons.html#ga14d094800a1f104fdd26905fc05ab416" title="Path to /proc/net/wireless.">WAPI_PROC_NET_WIRELESS</a>);
+<a name="l00047"></a>00047         <span class="keywordflow">return</span> -1;
+<a name="l00048"></a>00048     }
+<a name="l00049"></a>00049 
+<a name="l00050"></a>00050     <span class="comment">/* Iterate over available lines. */</span>
+<a name="l00051"></a>00051     ret = 0;
+<a name="l00052"></a>00052     <span class="keywordflow">while</span> (fgets(tmp, tmpsize, fp))
+<a name="l00053"></a>00053     {
+<a name="l00054"></a>00054         <span class="keywordtype">char</span> *beg;
+<a name="l00055"></a>00055         <span class="keywordtype">char</span> *end;
+<a name="l00056"></a>00056         <a class="code" href="structwapi__string__t.html" title="Linked list container for strings.">wapi_string_t</a> *string;
+<a name="l00057"></a>00057 
+<a name="l00058"></a>00058         <span class="comment">/* Locate the interface name region. */</span>
+<a name="l00059"></a>00059         <span class="keywordflow">for</span> (beg = tmp; *beg &amp;&amp; isspace(*beg); beg++);
+<a name="l00060"></a>00060         <span class="keywordflow">for</span> (end = beg; *end &amp;&amp; *end != <span class="charliteral">&#39;:&#39;</span>; end++);
+<a name="l00061"></a>00061 
+<a name="l00062"></a>00062         <span class="comment">/* Allocate both wapi_string_t and char vector. */</span>
+<a name="l00063"></a>00063         <span class="keywordtype">string</span> = malloc(<span class="keyword">sizeof</span>(<a class="code" href="structwapi__string__t.html" title="Linked list container for strings.">wapi_string_t</a>));
+<a name="l00064"></a>00064         <span class="keywordflow">if</span> (<span class="keywordtype">string</span>) <span class="keywordtype">string</span>-&gt;data = malloc(end - beg + <span class="keyword">sizeof</span>(<span class="keywordtype">char</span>));
+<a name="l00065"></a>00065         <span class="keywordflow">if</span> (!<span class="keywordtype">string</span> || !string-&gt;<a class="code" href="structwapi__string__t.html#aed12f4bf6977aae0ba7898c0869f5495">data</a>)
+<a name="l00066"></a>00066         {
+<a name="l00067"></a>00067             <a class="code" href="util_8h.html#ac33bd57679c89a7aed0e5e4cc1787446">WAPI_STRERROR</a>(<span class="stringliteral">&quot;malloc()&quot;</span>);
+<a name="l00068"></a>00068             ret = -1;
+<a name="l00069"></a>00069             <span class="keywordflow">break</span>;
+<a name="l00070"></a>00070         }
 <a name="l00071"></a>00071 
-<a name="l00072"></a>00072         <span class="comment">/* Push string into the list. */</span>
-<a name="l00073"></a>00073         <span class="keywordtype">string</span>-&gt;next = list-&gt;<a class="code" href="structwapi__list__t.html#a8c173e8470a754cd8b63e3ade855c3fe">head</a>.<a class="code" href="unionwapi__list__t_1_1wapi__list__head__t.html#a78726a4c5056338fb176a95ea8fc7571">string</a>;
-<a name="l00074"></a>00074         list-&gt;<a class="code" href="structwapi__list__t.html#a8c173e8470a754cd8b63e3ade855c3fe">head</a>.<a class="code" href="unionwapi__list__t_1_1wapi__list__head__t.html#a78726a4c5056338fb176a95ea8fc7571">string</a> = string;
-<a name="l00075"></a>00075     }
-<a name="l00076"></a>00076 
-<a name="l00077"></a>00077     fclose(fp);
-<a name="l00078"></a>00078     <span class="keywordflow">return</span> ret;
-<a name="l00079"></a>00079 }
-<a name="l00080"></a>00080 
-<a name="l00081"></a>00081 
-<a name="l00082"></a><a class="code" href="util_8c.html#ac46dbe0026b70469dbc18f0e731d81ac">00082</a> <span class="preprocessor">#define wapi_ioctl_command_name_bufsiz 128  </span><span class="comment">/* Is fairly enough to print an integer. */</span>
-<a name="l00083"></a>00083 <span class="keyword">static</span> <span class="keywordtype">char</span> wapi_ioctl_command_name_buf[wapi_ioctl_command_name_bufsiz];
+<a name="l00072"></a>00072         <span class="comment">/* Copy region into the buffer. */</span>
+<a name="l00073"></a>00073         snprintf(string-&gt;<a class="code" href="structwapi__string__t.html#aed12f4bf6977aae0ba7898c0869f5495">data</a>, (end - beg + <span class="keyword">sizeof</span>(<span class="keywordtype">char</span>)), <span class="stringliteral">&quot;%s&quot;</span>, beg);
+<a name="l00074"></a>00074 
+<a name="l00075"></a>00075         <span class="comment">/* Push string into the list. */</span>
+<a name="l00076"></a>00076         <span class="keywordtype">string</span>-&gt;next = list-&gt;<a class="code" href="structwapi__list__t.html#a8c173e8470a754cd8b63e3ade855c3fe">head</a>.<a class="code" href="unionwapi__list__t_1_1wapi__list__head__t.html#a78726a4c5056338fb176a95ea8fc7571">string</a>;
+<a name="l00077"></a>00077         list-&gt;<a class="code" href="structwapi__list__t.html#a8c173e8470a754cd8b63e3ade855c3fe">head</a>.<a class="code" href="unionwapi__list__t_1_1wapi__list__head__t.html#a78726a4c5056338fb176a95ea8fc7571">string</a> = string;
+<a name="l00078"></a>00078     }
+<a name="l00079"></a>00079 
+<a name="l00080"></a>00080     fclose(fp);
+<a name="l00081"></a>00081     <span class="keywordflow">return</span> ret;
+<a name="l00082"></a>00082 }
+<a name="l00083"></a>00083 
 <a name="l00084"></a>00084 
-<a name="l00085"></a>00085 
-<a name="l00086"></a>00086 <span class="keyword">const</span> <span class="keywordtype">char</span> *
-<a name="l00087"></a><a class="code" href="util_8h.html#abafc8f2c5f16e8fc7401bfedb5fbe815">00087</a> <a class="code" href="util_8c.html#abafc8f2c5f16e8fc7401bfedb5fbe815">wapi_ioctl_command_name</a>(<span class="keywordtype">int</span> cmd)
-<a name="l00088"></a>00088 {
-<a name="l00089"></a>00089     <span class="keywordflow">switch</span> (cmd)
-<a name="l00090"></a>00090     {
-<a name="l00091"></a>00091     <span class="keywordflow">case</span> SIOCADDRT:     <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCADDRT&quot;</span>;
-<a name="l00092"></a>00092     <span class="keywordflow">case</span> SIOCDELRT:     <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCDELRT&quot;</span>;
-<a name="l00093"></a>00093     <span class="keywordflow">case</span> SIOCGIFADDR:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIFADDR&quot;</span>;
-<a name="l00094"></a>00094     <span class="keywordflow">case</span> SIOCGIWAP:     <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWAP&quot;</span>;
-<a name="l00095"></a>00095     <span class="keywordflow">case</span> SIOCGIWESSID:  <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWESSID&quot;</span>;
-<a name="l00096"></a>00096     <span class="keywordflow">case</span> SIOCGIWFREQ:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWFREQ&quot;</span>;
-<a name="l00097"></a>00097     <span class="keywordflow">case</span> SIOCGIWMODE:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWMODE&quot;</span>;
-<a name="l00098"></a>00098     <span class="keywordflow">case</span> SIOCGIWRANGE:  <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWRANGE&quot;</span>;
-<a name="l00099"></a>00099     <span class="keywordflow">case</span> SIOCGIWRATE:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWRATE&quot;</span>;
-<a name="l00100"></a>00100     <span class="keywordflow">case</span> SIOCGIWSCAN:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWSCAN&quot;</span>;
-<a name="l00101"></a>00101     <span class="keywordflow">case</span> SIOCGIWTXPOW:  <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWTXPOW&quot;</span>;
-<a name="l00102"></a>00102     <span class="keywordflow">case</span> SIOCSIFADDR:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIFADDR&quot;</span>;
-<a name="l00103"></a>00103     <span class="keywordflow">case</span> SIOCSIWAP:     <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWAP&quot;</span>;
-<a name="l00104"></a>00104     <span class="keywordflow">case</span> SIOCSIWESSID:  <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWESSID&quot;</span>;
-<a name="l00105"></a>00105     <span class="keywordflow">case</span> SIOCSIWFREQ:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWFREQ&quot;</span>;
-<a name="l00106"></a>00106     <span class="keywordflow">case</span> SIOCSIWMODE:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWMODE&quot;</span>;
-<a name="l00107"></a>00107     <span class="keywordflow">case</span> SIOCSIWRATE:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWRATE&quot;</span>;
-<a name="l00108"></a>00108     <span class="keywordflow">case</span> SIOCSIWSCAN:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWSCAN&quot;</span>;
-<a name="l00109"></a>00109     <span class="keywordflow">case</span> SIOCSIWTXPOW:  <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWTXPOW&quot;</span>;
-<a name="l00110"></a>00110     <span class="keywordflow">default</span>:
-<a name="l00111"></a>00111         snprintf(
-<a name="l00112"></a>00112             wapi_ioctl_command_name_buf, <a class="code" href="util_8c.html#ac46dbe0026b70469dbc18f0e731d81ac">wapi_ioctl_command_name_bufsiz</a>,
-<a name="l00113"></a>00113             <span class="stringliteral">&quot;0x%x&quot;</span>, cmd);
-<a name="l00114"></a>00114         <span class="keywordflow">return</span> wapi_ioctl_command_name_buf;
-<a name="l00115"></a>00115     }
-<a name="l00116"></a>00116 }
+<a name="l00085"></a><a class="code" href="util_8c.html#ac46dbe0026b70469dbc18f0e731d81ac">00085</a> <span class="preprocessor">#define wapi_ioctl_command_name_bufsiz 128  </span><span class="comment">/* Is fairly enough to print an integer. */</span>
+<a name="l00086"></a>00086 <span class="keyword">static</span> <span class="keywordtype">char</span> wapi_ioctl_command_name_buf[wapi_ioctl_command_name_bufsiz];
+<a name="l00087"></a>00087 
+<a name="l00088"></a>00088 
+<a name="l00089"></a>00089 <span class="keyword">const</span> <span class="keywordtype">char</span> *
+<a name="l00090"></a><a class="code" href="util_8h.html#abafc8f2c5f16e8fc7401bfedb5fbe815">00090</a> <a class="code" href="util_8c.html#abafc8f2c5f16e8fc7401bfedb5fbe815">wapi_ioctl_command_name</a>(<span class="keywordtype">int</span> cmd)
+<a name="l00091"></a>00091 {
+<a name="l00092"></a>00092     <span class="keywordflow">switch</span> (cmd)
+<a name="l00093"></a>00093     {
+<a name="l00094"></a>00094     <span class="keywordflow">case</span> SIOCADDRT:     <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCADDRT&quot;</span>;
+<a name="l00095"></a>00095     <span class="keywordflow">case</span> SIOCDELRT:     <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCDELRT&quot;</span>;
+<a name="l00096"></a>00096     <span class="keywordflow">case</span> SIOCGIFADDR:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIFADDR&quot;</span>;
+<a name="l00097"></a>00097     <span class="keywordflow">case</span> SIOCGIWAP:     <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWAP&quot;</span>;
+<a name="l00098"></a>00098     <span class="keywordflow">case</span> SIOCGIWESSID:  <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWESSID&quot;</span>;
+<a name="l00099"></a>00099     <span class="keywordflow">case</span> SIOCGIWFREQ:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWFREQ&quot;</span>;
+<a name="l00100"></a>00100     <span class="keywordflow">case</span> SIOCGIWMODE:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWMODE&quot;</span>;
+<a name="l00101"></a>00101     <span class="keywordflow">case</span> SIOCGIWRANGE:  <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWRANGE&quot;</span>;
+<a name="l00102"></a>00102     <span class="keywordflow">case</span> SIOCGIWRATE:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWRATE&quot;</span>;
+<a name="l00103"></a>00103     <span class="keywordflow">case</span> SIOCGIWSCAN:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWSCAN&quot;</span>;
+<a name="l00104"></a>00104     <span class="keywordflow">case</span> SIOCGIWTXPOW:  <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCGIWTXPOW&quot;</span>;
+<a name="l00105"></a>00105     <span class="keywordflow">case</span> SIOCSIFADDR:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIFADDR&quot;</span>;
+<a name="l00106"></a>00106     <span class="keywordflow">case</span> SIOCSIWAP:     <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWAP&quot;</span>;
+<a name="l00107"></a>00107     <span class="keywordflow">case</span> SIOCSIWESSID:  <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWESSID&quot;</span>;
+<a name="l00108"></a>00108     <span class="keywordflow">case</span> SIOCSIWFREQ:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWFREQ&quot;</span>;
+<a name="l00109"></a>00109     <span class="keywordflow">case</span> SIOCSIWMODE:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWMODE&quot;</span>;
+<a name="l00110"></a>00110     <span class="keywordflow">case</span> SIOCSIWRATE:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWRATE&quot;</span>;
+<a name="l00111"></a>00111     <span class="keywordflow">case</span> SIOCSIWSCAN:   <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWSCAN&quot;</span>;
+<a name="l00112"></a>00112     <span class="keywordflow">case</span> SIOCSIWTXPOW:  <span class="keywordflow">return</span> <span class="stringliteral">&quot;SIOCSIWTXPOW&quot;</span>;
+<a name="l00113"></a>00113     <span class="keywordflow">default</span>:
+<a name="l00114"></a>00114         snprintf(
+<a name="l00115"></a>00115             wapi_ioctl_command_name_buf, <a class="code" href="util_8c.html#ac46dbe0026b70469dbc18f0e731d81ac">wapi_ioctl_command_name_bufsiz</a>,
+<a name="l00116"></a>00116             <span class="stringliteral">&quot;0x%x&quot;</span>, cmd);
+<a name="l00117"></a>00117         <span class="keywordflow">return</span> wapi_ioctl_command_name_buf;
+<a name="l00118"></a>00118     }
+<a name="l00119"></a>00119 }
 </pre></div></div>
 </div>
-<hr class="footer"/><address class="footer"><small>Generated on Thu Dec 2 2010 23:20:01 for WAPI by&nbsp;
+<hr class="footer"/><address class="footer"><small>Generated on Mon Dec 13 2010 18:32:32 for WAPI by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.1 </small></address>
 </body>

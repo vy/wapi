@@ -26,6 +26,9 @@
 <div class="contents">
 <p><a href="http://github.com/vy/wapi">WAPI</a> provides an easy-to-use function set to configure wireless network interfaces in a GNU/Linux system. One can think WAPI as a lightweight C API for <code>iwconfig</code>, <code>wlanconfig</code>, <code>ifconfig</code>, and <code>route</code> commands. (But it is not a thin wrapper for these command line tools.) It is designed to be used in wireless heteregenous network research projects and supported by <a href="http://bwrc.eecs.berkeley.edu/">BWRC (Berkeley Wireless Research Center)</a> and <a href="http://www.wiserlab.org/">WISERLAB (Wireless Information Systems Engineering Research Laboratory at Özyeğin University)</a>.</p>
 <p>For <code>iwconfig</code>, <code>ifconfig</code>, and <code>route</code> command functionalities, WAPI issues same set of ioctl() calls to the netlink kernel. While <code>ifconfig</code> and <code>route</code> doesn't have that many ad-hoc hacks for backward compatibility issues, <code>iwconfig</code> is messed with dozens of such stuff in all around the code. In WAPI, we try to avoid all such hacks and target recent hardware and kernel versions (&gt;2.6). But most of the time, it should just work fine. For virtual (wireless) interface management, we rely on <a href="http://linuxwireless.org/en/developers/Documentation/nl80211">nl80211</a> netlink interface. (Which is actually intended to replace Wireless Extensions.)</p>
+<h2><a class="anchor" id="dload"></a>
+Download</h2>
+<p>You can track the changes and obtain the sources from <a href="http://github.com/vy/wapi">http://github.com/vy/wapi</a> address. You can also directly download the sources of the most recent version from here (<a href="files/wapi-0.1.tar.gz">wapi-0.1.tar.gz</a>) as well. <a href="http://www.scons.org/">SCons</a>, <a href="http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/Tools.html">wireless-tools</a>, and <a href="http://www.infradead.org/~tgr/libnl/">libnl</a> packages are required to compile the sources.</p>
 <h2><a class="anchor" id="faq"></a>
 Frequently Asked Questions</h2>
 <h3><a class="anchor" id="whatiswapi"></a>
@@ -50,7 +53,7 @@ Ok, I heard enough. Show me some code.</h3>
 I found a bug. What then?</h3>
 <p>Just report me via e-mail. (A detailed explanation to reproduce the problem would be awesome.) I will try to fix it ASAP. </p>
 </div>
-<hr class="footer"/><address class="footer"><small>Generated on Thu Dec 2 2010 23:20:00 for WAPI by&nbsp;
+<hr class="footer"/><address class="footer"><small>Generated on Mon Dec 13 2010 18:32:32 for WAPI by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.1 </small></address>
 </body>
