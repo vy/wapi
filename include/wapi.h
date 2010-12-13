@@ -266,8 +266,8 @@ extern const char *wapi_essid_flags[];
 /**
  * Gets ESSID of the device.
  *
- * @param[out] essid Buffer will be used to store the ESSID of the device. Must
- *     of size @c WAPI_ESSID_MAX_SIZE+1.
+ * @param[out] essid Used to store the ESSID of the device. Buffer must have
+ *     enough space to store @c WAPI_ESSID_MAX_SIZE+1 characters.
  */
 int
 wapi_get_essid(
