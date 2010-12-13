@@ -23,6 +23,18 @@ href="http://linuxwireless.org/en/developers/Documentation/nl80211">nl80211</a>
 netlink interface. (Which is actually intended to replace Wireless Extensions.)
 
 
+@section dload Download
+
+You can track the changes and obtain the sources from <a
+href="http://github.com/vy/wapi">http://github.com/vy/wapi</a> address. You can
+also directly download the sources of the most recent version from here (<a
+href="files/wapi-0.1.tar.gz">wapi-0.1.tar.gz</a>) as well. <a
+href="http://www.scons.org/">SCons</a>, <a
+href="http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/Tools.html">wireless-tools</a>,
+and <a href="http://www.infradead.org/~tgr/libnl/">libnl</a> packages are
+required to compile the sources.
+
+
 @section faq Frequently Asked Questions
 
 

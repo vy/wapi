@@ -8,3 +8,5 @@ semantic.cache
 src/*.o
 src/*.os
 TAGS
+.sconf_temp
+config.log
