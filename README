@@ -16,6 +16,9 @@ For source codes, see http://github.com/vy/wapi. While you can manually generate
 the documentation via Doxygen, the most recent version of the documentation is
 (hopefully) always available at http://vy.github.com/wapi.
 
+You can also easily integrate WAPI to OpenWrt platform as well. For this
+purpose, just see Makefile.OpenWrt in the root directory.
+
 
 --- L I C E N S E --------------------------------------------------------------
 

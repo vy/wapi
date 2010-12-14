@@ -86,6 +86,10 @@ mail.
 
 Just check source files under @c examples directory.
 
+@subsection openwrt Can I integrate WAPI to OpenWrt as well?
+
+Sure! Just see @c Makefile.OpenWrt in the root directory.
+
 @subsection foundbug I found a bug. What then?
 
 Just report me via e-mail. (A detailed explanation to reproduce the problem
