@@ -1,0 +1,51 @@
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=wapi
+PKG_VERSION:=0.1
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=http://vy.github.com/wapi/files/
+PKG_MD5SUM:=a8f947ebf0215f8dcbf87d20702219fd
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/wapi
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=generic C API for network interfaces
+  URL:=http://vy.github.com/wapi/
+  DEPENDS:=libiw libnl
+endef
+
+define Package/wapi/description
+  This package provides an easy-to-use generic C API to network interfaces in
+  GNU/Linux systems. One can think WAPI as a lightweight C API for iwconfig,
+  wlanconfig, ifconfig, and route commands. (But it is not a thin wrapper for
+  these command line tools.)
+endef
+
+define Build/Compile
+	$(INSTALL_DIR) $(PKG_BUILD_DIR)/lib
+	$(TARGET_CC) \
+		$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS) $(FPIC) \
+		-shared -fno-strict-aliasing -lnl-tiny -lm -liw \
+		-I$(PKG_BUILD_DIR)/include \
+		-I$(PKG_BUILD_DIR)/src \
+		$(PKG_BUILD_DIR)/src/util.c \
+		$(PKG_BUILD_DIR)/src/network.c \
+		$(PKG_BUILD_DIR)/src/wireless.c \
+		-o $(PKG_BUILD_DIR)/lib/libwapi.so
+endef
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/include/wapi.h $(STAGING_DIR)/usr/include/
+endef
+
+define Package/wapi/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/lib/libwapi.so $(1)/usr/lib/
+endef
+
+$(eval $(call BuildPackage,wapi))
