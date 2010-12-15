@@ -29,7 +29,7 @@ define Build/Compile
 	$(INSTALL_DIR) $(PKG_BUILD_DIR)/lib
 	$(TARGET_CC) \
 		$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS) $(FPIC) \
-		-shared -fno-strict-aliasing -lnl-tiny -lm -liw \
+		-shared -fno-strict-aliasing -DLIBNL1 -lnl -lm -liw \
 		-I$(PKG_BUILD_DIR)/include \
 		-I$(PKG_BUILD_DIR)/src \
 		$(PKG_BUILD_DIR)/src/util.c \
