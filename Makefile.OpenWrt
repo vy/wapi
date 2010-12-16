@@ -39,8 +39,10 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/include/wapi.h $(STAGING_DIR)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/include/wapi.h $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/lib/libwapi.so $(1)/usr/lib/
 endef
 
 define Package/wapi/install
