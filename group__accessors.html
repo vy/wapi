@@ -46,9 +46,147 @@ Modules</h2></td></tr>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
 <p>This section is composed of accessors (getters and setters) for various network interface configurations. </p>
 <p>Each accessor requires a socket (see <a class="el" href="group__utils.html#ga9a13608f9736a249e5bcf1b2c498086a" title="Creates an AF_INET socket to be used in ioctl() calls.">wapi_make_socket()</a>) to issue kernel commands. Since each accessor is a user-friendly wrapper over various ioctl() calls, unless stated otherwise, return values of the accessors are generally obtained by related ioctl() calls. In other words, on success, zero is returned.</p>
-<p>Pay attention that, all setters require root privileges. </p>
+<p>Pay attention that, all setters require root privileges.</p>
+<p>Below is an example usage of some accessor routines.</p>
+<div class="fragment"><pre class="fragment"><span class="comment">/**</span>
+<span class="comment"> * Gets current configuration of the @a ifname using WAPI accessors and prints</span>
+<span class="comment"> * them in a pretty fashion. If a getter succeeds (and if @a set_ok is set), we</span>
+<span class="comment"> * try to set that property with the same value to test the setters as well.</span>
+<span class="comment"> */</span>
+<span class="keyword">static</span> <span class="keywordtype">void</span>
+conf(<span class="keywordtype">int</span> sock, <span class="keyword">const</span> <span class="keywordtype">char</span> *ifname, <span class="keywordtype">int</span> set_ok)
+{
+    <span class="keyword">struct </span>in_addr addr;
+    <span class="keywordtype">double</span> freq;
+    <a class="code" href="group__freq.html#ga6635aa657f3338eabcf8facbddf97f6d" title="Frequency flags.">wapi_freq_flag_t</a> freq_flag;
+    <span class="keywordtype">char</span> essid[<a class="code" href="group__essid.html#ga67a22f92768794adf9f739a8939f631d" title="Maximum allowed ESSID size.">WAPI_ESSID_MAX_SIZE</a> + 1];
+    <a class="code" href="group__essid.html#ga0c60b44b5678adb83c7b51f2068432f5" title="ESSID flags.">wapi_essid_flag_t</a> essid_flag;
+    <a class="code" href="group__mode.html#gae286c9c11f002a0ee147685e44721838" title="Supported operation modes.">wapi_mode_t</a> mode;
+    <span class="keyword">struct </span>ether_addr ap;
+    <span class="keywordtype">int</span> bitrate;
+    <a class="code" href="group__bitrate.html#gacced8e4a6bca67ec235867a3ad58b244" title="Bitrate flags.">wapi_bitrate_flag_t</a> bitrate_flag;
+    <span class="keywordtype">int</span> txpower;
+    <a class="code" href="group__txpower.html#gaff96160b8b258a7779a6421bc2ff3745" title="Transmit power (txpower) flags.">wapi_txpower_flag_t</a> txpower_flag;
+
+    <span class="comment">/* get ip */</span>
+    bzero(&amp;addr, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> in_addr));
+    <span class="keywordflow">if</span> (<a class="code" href="group__ip.html#ga4e9710b3f4100fac1d1521ed923017db" title="Gets IP address of the given network interface.">wapi_get_ip</a>(sock, ifname, &amp;addr) &gt;= 0)
+    {
+        printf(<span class="stringliteral">&quot;ip: %s\n&quot;</span>, inet_ntoa(addr));
+
+        <span class="keywordflow">if</span> (set_ok)
+            <span class="comment">/* set ip (Make sure sin.sin_family is set to AF_INET.) */</span>
+            <a class="code" href="group__ip.html#ga412b0171d46d07fb82c30cdfcecde327" title="Sets IP adress of the given network interface.">wapi_set_ip</a>(sock, ifname, &amp;addr);
+    }
+
+    <span class="comment">/* get netmask */</span>
+    bzero(&amp;addr, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> in_addr));
+    <span class="keywordflow">if</span> (<a class="code" href="group__ip.html#ga135db09561f5625f70fb05c3907ef7ec" title="Gets netmask of the given network interface.">wapi_get_netmask</a>(sock, ifname, &amp;addr) &gt;= 0)
+    {
+        printf(<span class="stringliteral">&quot;netmask: %s\n&quot;</span>, inet_ntoa(addr));
+
+        <span class="keywordflow">if</span> (set_ok)
+            <span class="comment">/* set netmask (Make sure sin.sin_family is set to AF_INET.) */</span>
+            <a class="code" href="group__ip.html#ga0369984825f59a579fd6dba96e48370e" title="Sets netmask of the given network interface.">wapi_set_netmask</a>(sock, ifname, &amp;addr);
+    }
+
+    <span class="comment">/* get freq */</span>
+    <span class="keywordflow">if</span> (<a class="code" href="group__freq.html#ga38fbb457495ee83f962157d5842df197" title="Gets the operating frequency of the device.">wapi_get_freq</a>(sock, ifname, &amp;freq, &amp;freq_flag) &gt;= 0)
+    {
+        <span class="keywordtype">int</span> chan;
+        <span class="keywordtype">double</span> tmpfreq;
+
+        printf(<span class="stringliteral">&quot;freq: %g\n&quot;</span>, freq);
+        printf(<span class="stringliteral">&quot;freq_flag: %s\n&quot;</span>, <a class="code" href="group__freq.html#gafe64c6355ddb3c01ae6025fe5bcd516d" title="Frequency flag names.">wapi_freq_flags</a>[freq_flag]);
+
+        <span class="keywordflow">if</span> (<a class="code" href="group__freq.html#ga96524cdfef0a829fc94990c425a3b7b6" title="Finds corresponding channel for the supplied freq.">wapi_freq2chan</a>(sock, ifname, freq, &amp;chan) &gt;= 0)
+            printf(<span class="stringliteral">&quot;chan: %d\n&quot;</span>, chan);
+
+        <span class="keywordflow">if</span> (<a class="code" href="group__freq.html#ga9c957a075c0fd81a90e605790cf8297c" title="Finds corresponding frequency for the supplied chan.">wapi_chan2freq</a>(sock, ifname, chan, &amp;tmpfreq) &gt;= 0)
+            printf(<span class="stringliteral">&quot;freq: %g\n&quot;</span>, tmpfreq);
+
+        <span class="keywordflow">if</span> (set_ok)
+            <span class="comment">/* set freq */</span>
+            <a class="code" href="group__freq.html#ga9cf563be3f4b897bb96751d85db1faf4" title="Sets the operating frequency of the device.">wapi_set_freq</a>(sock, ifname, freq, freq_flag);
+    }
+
+    <span class="comment">/* get essid */</span>
+    <span class="keywordflow">if</span> (<a class="code" href="group__essid.html#ga75dbf1048fa971ccf0ab86e1f6cfdaeb" title="Gets ESSID of the device.">wapi_get_essid</a>(sock, ifname, essid, &amp;essid_flag) &gt;= 0)
+    {
+        printf(<span class="stringliteral">&quot;essid: %s\n&quot;</span>, essid);
+        printf(<span class="stringliteral">&quot;essid_flag: %s\n&quot;</span>, <a class="code" href="group__essid.html#ga02ede95bb0fde413cb4e6b784125816b" title="ESSID flag names.">wapi_essid_flags</a>[essid_flag]);
+
+        <span class="keywordflow">if</span> (set_ok)
+            <span class="comment">/* set essid */</span>
+            <a class="code" href="group__essid.html#gaccbc415656332da62af6763b675f4005" title="Sets ESSID of the device.">wapi_set_essid</a>(sock, ifname, essid, essid_flag);
+    }
+
+    <span class="comment">/* get operating mode */</span>
+    <span class="keywordflow">if</span> (<a class="code" href="group__mode.html#ga778dab2a14f92c7225d3751733b4c31f" title="Gets the operating mode of the device.">wapi_get_mode</a>(sock, ifname, &amp;mode) &gt;= 0)
+    {
+        printf(<span class="stringliteral">&quot;mode: %s\n&quot;</span>, <a class="code" href="group__mode.html#ga688e68c9b94f9497fbce0fe5a140a48d" title="Supported operation mode names.">wapi_modes</a>[mode]);
+
+        <span class="keywordflow">if</span> (set_ok)
+            <span class="comment">/* set operating mode */</span>
+            <a class="code" href="group__mode.html#ga777bfc336f52a3b0cd87239e294bf1af" title="Sets the operating mode of the device.">wapi_set_mode</a>(sock, ifname, mode);
+    }
+
+    <span class="comment">/* get ap */</span>
+    <span class="keywordflow">if</span> (<a class="code" href="group__ap.html#gaf7453da37a29cb3adaa4023aa326a4f9" title="Gets access point address of the device.">wapi_get_ap</a>(sock, ifname, &amp;ap) &gt;= 0)
+    {
+        printf(
+            <span class="stringliteral">&quot;ap: %02X:%02X:%02X:%02X:%02X:%02X\n&quot;</span>,
+            ap.ether_addr_octet[0],
+            ap.ether_addr_octet[1],
+            ap.ether_addr_octet[2],
+            ap.ether_addr_octet[3],
+            ap.ether_addr_octet[4],
+            ap.ether_addr_octet[5]);
+
+        <span class="keywordflow">if</span> (set_ok)
+            <span class="comment">/* set ap */</span>
+            <a class="code" href="group__ap.html#ga71cbaec7793c7e291d2dc22252e9d1b6" title="Sets access point address of the device.">wapi_set_ap</a>(sock, ifname, &amp;ap);
+    }
+
+    <span class="comment">/* get bitrate */</span>
+    <span class="keywordflow">if</span> (<a class="code" href="group__bitrate.html#gaaa214f5267ec4b6cb7f6bd772108cf85" title="Gets bitrate of the device.">wapi_get_bitrate</a>(sock, ifname, &amp;bitrate, &amp;bitrate_flag) &gt;= 0)
+    {
+        printf(<span class="stringliteral">&quot;bitrate: %d\n&quot;</span>, bitrate);
+        printf(<span class="stringliteral">&quot;bitrate_flag: %s\n&quot;</span>, <a class="code" href="group__bitrate.html#ga68e3a9eec08f83fb6bdabb13e552d9eb" title="Bitrate flag names.">wapi_bitrate_flags</a>[bitrate_flag]);
+
+        <span class="keywordflow">if</span> (set_ok)
+            <span class="comment">/* set bitrate */</span>
+            <a class="code" href="group__bitrate.html#gafe054b397a23333a9bf646af138a5257" title="Sets bitrate of the device.">wapi_set_bitrate</a>(sock, ifname, bitrate, bitrate_flag);
+    }
+
+    <span class="comment">/* get txpower */</span>
+    <span class="keywordflow">if</span> (<a class="code" href="group__txpower.html#gab9fa1e07482035fa46ed7c5da59565b7" title="Gets txpower of the device.">wapi_get_txpower</a>(sock, ifname, &amp;txpower, &amp;txpower_flag) &gt;= 0)
+    {
+        printf(<span class="stringliteral">&quot;txpower: %d\n&quot;</span>, txpower);
+        printf(<span class="stringliteral">&quot;txpower_flag: %s\n&quot;</span>, <a class="code" href="group__txpower.html#ga618e651c7b5a752e4f7f9ebbed855dba" title="Transmit power flag names.">wapi_txpower_flags</a>[txpower_flag]);
+
+        <span class="keywordflow">if</span> (set_ok)
+            <span class="comment">/* set txpower */</span>
+            <a class="code" href="group__txpower.html#ga6d382afa11a68c9375f9ad0a365f5919" title="Sets txpower of the device.">wapi_set_txpower</a>(sock, ifname, txpower, txpower_flag);
+    }
+}
+</pre></div><p>A sample output of the above function is as follows.</p>
+<div class="fragment"><pre class="fragment">
+ip: 192.168.1.111
+netmask: 255.255.255.0
+freq: 2.412e+09
+freq_flag: WAPI_FREQ_AUTO
+chan: 1
+freq: 2.412e+09
+essid: ozu
+essid_flag: WAPI_ESSID_ON
+mode: WAPI_MODE_MANAGED
+ap: 00:14:C1:34:CE:83
+wireless.c:451:wapi_get_bitrate(): Bitrate is disabled.
+wireless.c:546:wapi_get_txpower():ioctl(SIOCGIWTXPOW): Invalid argument
+</pre></div><p>As can be seen from the output, some functionalities are not supported by the underlying wireless network card of the test system. </p>
 </div>
-<hr class="footer"/><address class="footer"><small>Generated on Tue Dec 14 2010 11:21:27 for WAPI by&nbsp;
+<hr class="footer"/><address class="footer"><small>Generated on Sun Dec 19 2010 00:16:20 for WAPI by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.1 </small></address>
 </body>

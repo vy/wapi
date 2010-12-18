@@ -41,8 +41,77 @@ Functions</h2></td></tr>
 </table>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
 <p>This group consists of functions for scanning accessible access points (APs) in the range. </p>
-<p>Unfortunately provided scanning API by wireless-tools libraries (libiw) is quite limited, and doesn't list all APs in the range. (See iw_process_scan() of libiw. For iwlist case, it has its own hardcoded magic for this stuff and it is not provided by libiw.) For this purpose, we needed to implement our own scanning routines. Furthermore, scanning requires extracting binary results returned from kernel over a <code>char</code> buffer, hence it causes dozens of hairy binary compatibility issues. Luckily, libiw provide an API method to cope with this: iw_extract_event_stream(). That's the only place in this project relying on libiw.</p>
-<p>The scanning operation disable normal network traffic, and therefore you should not abuse of scan. The scan need to check the presence of network on other frequencies. While you are checking those other frequencies, you can not be on your normal frequency to listen to normal traffic in the cell. You need typically in the order of one second to actively probe all 802.11b channels (do the maths). Some cards may do that in background, to reply to scan commands faster, but they still have to do it. Leaving the cell for such an extended period of time is pretty bad. Any kind of streaming/low latency traffic will be impacted, and the user will perceive it (easily checked with telnet). People trying to send traffic to you will retry packets and waste bandwidth. Some applications may be sensitive to those packet losses in weird ways, and tracing those weird behavior back to scanning may take time. If you are in ad-hoc mode, if two nodes scan approx at the same time, they won't see each other, which may create associations issues. For those reasons, the scanning activity should be limited to what's really needed, and continuous scanning is a bad idea. --- Jean Tourrilhes </p>
+<p>Unfortunately provided scanning API by wireless-tools libraries (libiw) is quite limited, and doesn't list all APs in the range. (See iw_process_scan() of libiw. For iwlist case, it has its own hardcoded magic for this stuff and it is not provided by libiw.) For this purpose, we needed to implement our own scanning routines. Furthermore, scanning requires extracting binary results returned from kernel over a <code>char</code> buffer, hence it causes dozens of hairy binary compatibility issues. Luckily, libiw provides an API method to cope with this: iw_extract_event_stream(). That's the only place in this project relying on libiw.</p>
+<p>The scanning operation disable normal network traffic, and therefore you should not abuse of scan. The scan need to check the presence of network on other frequencies. While you are checking those other frequencies, you can not be on your normal frequency to listen to normal traffic in the cell. You need typically in the order of one second to actively probe all 802.11b channels (do the maths). Some cards may do that in background, to reply to scan commands faster, but they still have to do it. Leaving the cell for such an extended period of time is pretty bad. Any kind of streaming/low latency traffic will be impacted, and the user will perceive it (easily checked with telnet). People trying to send traffic to you will retry packets and waste bandwidth. Some applications may be sensitive to those packet losses in weird ways, and tracing those weird behavior back to scanning may take time. If you are in ad-hoc mode, if two nodes scan approx at the same time, they won't see each other, which may create associations issues. For those reasons, the scanning activity should be limited to what's really needed, and continuous scanning is a bad idea. --- Jean Tourrilhes</p>
+<p>Here is an example demonstrating the usage of the scanning API.</p>
+<div class="fragment"><pre class="fragment"><span class="comment">/**</span>
+<span class="comment"> * Scans available APs in the range using given @a ifname interface.</span>
+<span class="comment"> */</span>
+<span class="keyword">static</span> <span class="keywordtype">void</span>
+scan(<span class="keywordtype">int</span> sock, <span class="keyword">const</span> <span class="keywordtype">char</span> *ifname)
+{
+    <span class="keywordtype">int</span> sleepdur = 1;
+    <span class="keywordtype">int</span> sleeptries = 5;
+    <a class="code" href="structwapi__list__t.html" title="A generic linked list container.">wapi_list_t</a> list;
+    <a class="code" href="structwapi__scan__info__t.html" title="Linked list container for scan results.">wapi_scan_info_t</a> *info;
+    <span class="keywordtype">int</span> ret;
+
+    <span class="comment">/* start scan */</span>
+    <span class="keywordflow">if</span> (<a class="code" href="group__scan.html#gac2aff8efd76d361703528735af7531f9" title="Starts a scan on the given interface.">wapi_scan_init</a>(sock, ifname) &lt; 0)
+        <span class="keywordflow">return</span>;
+
+    <span class="comment">/* wait for completion */</span>
+    <span class="keywordflow">do</span> {
+        printf(<span class="stringliteral">&quot;scan(): sleeptries: %d\n&quot;</span>, sleeptries);
+        sleep(sleepdur);
+        ret = <a class="code" href="group__scan.html#gaa74552374156e69bc56ad15e2970b4ed" title="Checks the status of the scan process.">wapi_scan_stat</a>(sock, ifname);
+    } <span class="keywordflow">while</span> (--sleeptries &gt; 0 &amp;&amp; ret &gt; 0);
+
+    <span class="comment">/* check wait result */</span>
+    <span class="keywordflow">if</span> (ret &lt; 0)
+    {
+        <span class="keywordflow">if</span> (!sleeptries)
+            fprintf(stderr, <span class="stringliteral">&quot;scan(): sleeptries exceeded!\n&quot;</span>);
+        <span class="keywordflow">return</span>;
+    }
+
+    <span class="comment">/* collect results */</span>
+    bzero(&amp;list, <span class="keyword">sizeof</span>(<a class="code" href="structwapi__list__t.html" title="A generic linked list container.">wapi_list_t</a>));
+    <span class="keywordflow">if</span> (<a class="code" href="group__scan.html#ga0f56cf40fb2fffe63334cdff19a812b6" title="Collects the results of a scan process.">wapi_scan_coll</a>(sock, ifname, &amp;list) &gt;= 0)
+        <span class="keywordflow">for</span> (info = list.<a class="code" href="structwapi__list__t.html#a8c173e8470a754cd8b63e3ade855c3fe">head</a>.<a class="code" href="unionwapi__list__t_1_1wapi__list__head__t.html#a1fa054bb0101a875be4bcf514fb172bb">scan</a>; info; info = info-&gt;<a class="code" href="structwapi__scan__info__t.html#ad65e7c242f52e9ba3b4aa7681eb1be2c">next</a>)
+            printf(
+                <span class="stringliteral">&quot;&gt;&gt; %02x:%02x:%02x:%02x:%02x:%02x %s\n&quot;</span>,
+                info-&gt;<a class="code" href="structwapi__scan__info__t.html#a846c5a8b7d18dfbaf4f6f620164e36d4">ap</a>.ether_addr_octet[0],
+                info-&gt;<a class="code" href="structwapi__scan__info__t.html#a846c5a8b7d18dfbaf4f6f620164e36d4">ap</a>.ether_addr_octet[1],
+                info-&gt;<a class="code" href="structwapi__scan__info__t.html#a846c5a8b7d18dfbaf4f6f620164e36d4">ap</a>.ether_addr_octet[2],
+                info-&gt;<a class="code" href="structwapi__scan__info__t.html#a846c5a8b7d18dfbaf4f6f620164e36d4">ap</a>.ether_addr_octet[3],
+                info-&gt;<a class="code" href="structwapi__scan__info__t.html#a846c5a8b7d18dfbaf4f6f620164e36d4">ap</a>.ether_addr_octet[4],
+                info-&gt;<a class="code" href="structwapi__scan__info__t.html#a846c5a8b7d18dfbaf4f6f620164e36d4">ap</a>.ether_addr_octet[5],
+                (info-&gt;<a class="code" href="structwapi__scan__info__t.html#ae1a17e1912af037a4bc535c1c14b0140">has_essid</a> ? info-&gt;<a class="code" href="structwapi__scan__info__t.html#a108c4fd7f20ffeddc7071566c3fa9ccf">essid</a> : <span class="stringliteral">&quot;&quot;</span>));
+
+    <span class="comment">/* free ap list */</span>
+    info = list.<a class="code" href="structwapi__list__t.html#a8c173e8470a754cd8b63e3ade855c3fe">head</a>.<a class="code" href="unionwapi__list__t_1_1wapi__list__head__t.html#a1fa054bb0101a875be4bcf514fb172bb">scan</a>;
+    <span class="keywordflow">while</span> (info)
+    {
+        <a class="code" href="structwapi__scan__info__t.html" title="Linked list container for scan results.">wapi_scan_info_t</a> *temp;
+
+        temp = info-&gt;<a class="code" href="structwapi__scan__info__t.html#ad65e7c242f52e9ba3b4aa7681eb1be2c">next</a>;
+        free(info);
+        info = temp;
+    }
+}
+</pre></div><p>A sample output of the above function is as follows.</p>
+<div class="fragment"><pre class="fragment">
+scan(): sleeptries: 5
+scan(): sleeptries: 4
+&gt;&gt; 00:23:f8:d2:90:3f ednz
+&gt;&gt; 00:1c:a8:14:6d:16 meddev
+&gt;&gt; 00:1a:2a:c0:47:84 suat
+&gt;&gt; 00:1c:a8:fe:93:8c home
+&gt;&gt; 00:25:86:cf:e6:e5 TP-LINK
+&gt;&gt; 00:02:cf:af:d9:96 ZyXEL
+&gt;&gt; 00:14:c1:34:ce:83 ozu
+</pre></div><p>Considering <code>scan()</code> function, pay attention that scanning requires root privileges. (See <a class="el" href="group__scan.html#gac2aff8efd76d361703528735af7531f9" title="Starts a scan on the given interface.">wapi_scan_init()</a> for details.) </p>
 <hr/><h2>Function Documentation</h2>
 <a class="anchor" id="ga0f56cf40fb2fffe63334cdff19a812b6"></a><!-- doxytag: member="wapi.h::wapi_scan_coll" ref="ga0f56cf40fb2fffe63334cdff19a812b6" args="(int sock, const char *ifname, wapi_list_t *aps)" -->
 <div class="memitem">
@@ -83,9 +152,9 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="wireless_8c_source.html#l00740">740</a> of file <a class="el" href="wireless_8c_source.html">wireless.c</a>.</p>
+<p>Definition at line <a class="el" href="wireless_8c_source.html#l00742">742</a> of file <a class="el" href="wireless_8c_source.html">wireless.c</a>.</p>
 
-<p>References <a class="el" href="util_8h_source.html#l00029">WAPI_ERROR</a>, <a class="el" href="wireless_8c_source.html#l00028">wapi_get_we_version()</a>, <a class="el" href="util_8h_source.html#l00015">WAPI_IOCTL_STRERROR</a>, <a class="el" href="util_8h_source.html#l00022">WAPI_STRERROR</a>, and <a class="el" href="util_8h_source.html#l00035">WAPI_VALIDATE_PTR</a>.</p>
+<p>References <a class="el" href="util_8h_source.html#l00030">WAPI_ERROR</a>, <a class="el" href="wireless_8c_source.html#l00028">wapi_get_we_version()</a>, <a class="el" href="util_8h_source.html#l00016">WAPI_IOCTL_STRERROR</a>, <a class="el" href="util_8h_source.html#l00023">WAPI_STRERROR</a>, and <a class="el" href="util_8h_source.html#l00036">WAPI_VALIDATE_PTR</a>.</p>
 
 </div>
 </div>
@@ -117,9 +186,9 @@ Functions</h2></td></tr>
 <p>Starts a scan on the given interface. </p>
 <p>Root privileges are required to start a scan. </p>
 
-<p>Definition at line <a class="el" href="wireless_8c_source.html#l00618">618</a> of file <a class="el" href="wireless_8c_source.html">wireless.c</a>.</p>
+<p>Definition at line <a class="el" href="wireless_8c_source.html#l00620">620</a> of file <a class="el" href="wireless_8c_source.html">wireless.c</a>.</p>
 
-<p>References <a class="el" href="util_8h_source.html#l00015">WAPI_IOCTL_STRERROR</a>.</p>
+<p>References <a class="el" href="util_8h_source.html#l00016">WAPI_IOCTL_STRERROR</a>.</p>
 
 </div>
 </div>
@@ -151,14 +220,14 @@ Functions</h2></td></tr>
 <p>Checks the status of the scan process. </p>
 <dl class="return"><dt><b>Returns:</b></dt><dd>zero, if data is ready; 1, if data is not ready; negative on failure. </dd></dl>
 
-<p>Definition at line <a class="el" href="wireless_8c_source.html#l00636">636</a> of file <a class="el" href="wireless_8c_source.html">wireless.c</a>.</p>
+<p>Definition at line <a class="el" href="wireless_8c_source.html#l00638">638</a> of file <a class="el" href="wireless_8c_source.html">wireless.c</a>.</p>
 
-<p>References <a class="el" href="util_8h_source.html#l00015">WAPI_IOCTL_STRERROR</a>.</p>
+<p>References <a class="el" href="util_8h_source.html#l00016">WAPI_IOCTL_STRERROR</a>.</p>
 
 </div>
 </div>
 </div>
-<hr class="footer"/><address class="footer"><small>Generated on Tue Dec 14 2010 11:21:27 for WAPI by&nbsp;
+<hr class="footer"/><address class="footer"><small>Generated on Sun Dec 19 2010 00:16:20 for WAPI by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.1 </small></address>
 </body>

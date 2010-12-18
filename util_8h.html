@@ -43,6 +43,7 @@
 <a href="#_details">More...</a></p>
 <code>#include &lt;string.h&gt;</code><br/>
 <code>#include &lt;errno.h&gt;</code><br/>
+<code>#include &lt;libgen.h&gt;</code><br/>
 
 <p><a href="util_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -85,13 +86,13 @@ Functions</h2></td></tr>
       </table>
 </div>
 <div class="memdoc">
-<b>Value:</b><div class="fragment"><pre class="fragment">fprintf(                                            \
-        stderr, <span class="stringliteral">&quot;%s:%d:%s(): &quot;</span> fmt ,                    \
-        __FILE__, __LINE__, __func__, ## __VA_ARGS__)
+<b>Value:</b><div class="fragment"><pre class="fragment">fprintf(                                                    \
+        stderr, <span class="stringliteral">&quot;%s:%d:%s(): &quot;</span> fmt ,                            \
+        basename(__FILE__), __LINE__, __func__, ## __VA_ARGS__)
 </pre></div>
-<p>Definition at line <a class="el" href="util_8h_source.html#l00029">29</a> of file <a class="el" href="util_8h_source.html">util.h</a>.</p>
+<p>Definition at line <a class="el" href="util_8h_source.html#l00030">30</a> of file <a class="el" href="util_8h_source.html">util.h</a>.</p>
 
-<p>Referenced by <a class="el" href="wireless_8c_source.html#l00431">wapi_get_bitrate()</a>, <a class="el" href="wireless_8c_source.html#l00095">wapi_get_freq()</a>, <a class="el" href="util_8c_source.html#l00026">wapi_get_ifnames()</a>, <a class="el" href="network_8c_source.html#l00150">wapi_get_routes()</a>, <a class="el" href="wireless_8c_source.html#l00509">wapi_get_txpower()</a>, and <a class="el" href="wireless_8c_source.html#l00740">wapi_scan_coll()</a>.</p>
+<p>Referenced by <a class="el" href="wireless_8c_source.html#l00195">wapi_chan2freq()</a>, <a class="el" href="wireless_8c_source.html#l00154">wapi_freq2chan()</a>, <a class="el" href="wireless_8c_source.html#l00433">wapi_get_bitrate()</a>, <a class="el" href="wireless_8c_source.html#l00095">wapi_get_freq()</a>, <a class="el" href="util_8c_source.html#l00028">wapi_get_ifnames()</a>, <a class="el" href="network_8c_source.html#l00150">wapi_get_routes()</a>, <a class="el" href="wireless_8c_source.html#l00511">wapi_get_txpower()</a>, and <a class="el" href="wireless_8c_source.html#l00742">wapi_scan_coll()</a>.</p>
 
 </div>
 </div>
@@ -112,12 +113,12 @@ Functions</h2></td></tr>
 <div class="memdoc">
 <b>Value:</b><div class="fragment"><pre class="fragment">fprintf(                                            \
         stderr, <span class="stringliteral">&quot;%s:%d:%s():ioctl(%s): %s\n&quot;</span>,           \
-        __FILE__, __LINE__, __func__,                   \
+        basename(__FILE__), __LINE__, __func__,         \
         <a class="code" href="util_8c.html#abafc8f2c5f16e8fc7401bfedb5fbe815">wapi_ioctl_command_name</a>(cmd), strerror(errno))
 </pre></div>
-<p>Definition at line <a class="el" href="util_8h_source.html#l00015">15</a> of file <a class="el" href="util_8h_source.html">util.h</a>.</p>
+<p>Definition at line <a class="el" href="util_8h_source.html#l00016">16</a> of file <a class="el" href="util_8h_source.html">util.h</a>.</p>
 
-<p>Referenced by <a class="el" href="wireless_8c_source.html#l00194">wapi_chan2freq()</a>, <a class="el" href="wireless_8c_source.html#l00154">wapi_freq2chan()</a>, <a class="el" href="wireless_8c_source.html#l00387">wapi_get_ap()</a>, <a class="el" href="wireless_8c_source.html#l00431">wapi_get_bitrate()</a>, <a class="el" href="wireless_8c_source.html#l00241">wapi_get_essid()</a>, <a class="el" href="network_8c_source.html#l00023">wapi_get_ifup()</a>, <a class="el" href="wireless_8c_source.html#l00328">wapi_get_mode()</a>, <a class="el" href="wireless_8c_source.html#l00509">wapi_get_txpower()</a>, <a class="el" href="wireless_8c_source.html#l00028">wapi_get_we_version()</a>, <a class="el" href="wireless_8c_source.html#l00740">wapi_scan_coll()</a>, <a class="el" href="wireless_8c_source.html#l00618">wapi_scan_init()</a>, <a class="el" href="wireless_8c_source.html#l00636">wapi_scan_stat()</a>, <a class="el" href="wireless_8c_source.html#l00404">wapi_set_ap()</a>, <a class="el" href="wireless_8c_source.html#l00464">wapi_set_bitrate()</a>, <a class="el" href="wireless_8c_source.html#l00267">wapi_set_essid()</a>, <a class="el" href="wireless_8c_source.html#l00126">wapi_set_freq()</a>, <a class="el" href="network_8c_source.html#l00058">wapi_set_ifdown()</a>, <a class="el" href="network_8c_source.html#l00040">wapi_set_ifup()</a>, <a class="el" href="wireless_8c_source.html#l00345">wapi_set_mode()</a>, and <a class="el" href="wireless_8c_source.html#l00551">wapi_set_txpower()</a>.</p>
+<p>Referenced by <a class="el" href="wireless_8c_source.html#l00195">wapi_chan2freq()</a>, <a class="el" href="wireless_8c_source.html#l00154">wapi_freq2chan()</a>, <a class="el" href="wireless_8c_source.html#l00389">wapi_get_ap()</a>, <a class="el" href="wireless_8c_source.html#l00433">wapi_get_bitrate()</a>, <a class="el" href="wireless_8c_source.html#l00243">wapi_get_essid()</a>, <a class="el" href="network_8c_source.html#l00023">wapi_get_ifup()</a>, <a class="el" href="wireless_8c_source.html#l00330">wapi_get_mode()</a>, <a class="el" href="wireless_8c_source.html#l00511">wapi_get_txpower()</a>, <a class="el" href="wireless_8c_source.html#l00028">wapi_get_we_version()</a>, <a class="el" href="wireless_8c_source.html#l00742">wapi_scan_coll()</a>, <a class="el" href="wireless_8c_source.html#l00620">wapi_scan_init()</a>, <a class="el" href="wireless_8c_source.html#l00638">wapi_scan_stat()</a>, <a class="el" href="wireless_8c_source.html#l00406">wapi_set_ap()</a>, <a class="el" href="wireless_8c_source.html#l00466">wapi_set_bitrate()</a>, <a class="el" href="wireless_8c_source.html#l00269">wapi_set_essid()</a>, <a class="el" href="wireless_8c_source.html#l00126">wapi_set_freq()</a>, <a class="el" href="network_8c_source.html#l00058">wapi_set_ifdown()</a>, <a class="el" href="network_8c_source.html#l00040">wapi_set_ifup()</a>, <a class="el" href="wireless_8c_source.html#l00347">wapi_set_mode()</a>, and <a class="el" href="wireless_8c_source.html#l00553">wapi_set_txpower()</a>.</p>
 
 </div>
 </div>
@@ -147,12 +148,12 @@ Functions</h2></td></tr>
 <div class="memdoc">
 <b>Value:</b><div class="fragment"><pre class="fragment">fprintf(                                    \
         stderr, <span class="stringliteral">&quot;%s:%d:%s():&quot;</span> fmt <span class="stringliteral">&quot;: %s\n&quot;</span>,     \
-        __FILE__, __LINE__, __func__,           \
+        basename(__FILE__), __LINE__, __func__, \
         ## __VA_ARGS__, strerror(errno))
 </pre></div>
-<p>Definition at line <a class="el" href="util_8h_source.html#l00022">22</a> of file <a class="el" href="util_8h_source.html">util.h</a>.</p>
+<p>Definition at line <a class="el" href="util_8h_source.html#l00023">23</a> of file <a class="el" href="util_8h_source.html">util.h</a>.</p>
 
-<p>Referenced by <a class="el" href="util_8c_source.html#l00026">wapi_get_ifnames()</a>, <a class="el" href="network_8c_source.html#l00150">wapi_get_routes()</a>, and <a class="el" href="wireless_8c_source.html#l00740">wapi_scan_coll()</a>.</p>
+<p>Referenced by <a class="el" href="util_8c_source.html#l00028">wapi_get_ifnames()</a>, <a class="el" href="network_8c_source.html#l00150">wapi_get_routes()</a>, <a class="el" href="util_8c_source.html#l00019">wapi_make_socket()</a>, and <a class="el" href="wireless_8c_source.html#l00742">wapi_scan_coll()</a>.</p>
 
 </div>
 </div>
@@ -177,9 +178,9 @@ Functions</h2></td></tr>
         <span class="keywordflow">return</span> -1;                                  \
     }
 </pre></div>
-<p>Definition at line <a class="el" href="util_8h_source.html#l00035">35</a> of file <a class="el" href="util_8h_source.html">util.h</a>.</p>
+<p>Definition at line <a class="el" href="util_8h_source.html#l00036">36</a> of file <a class="el" href="util_8h_source.html">util.h</a>.</p>
 
-<p>Referenced by <a class="el" href="wireless_8c_source.html#l00194">wapi_chan2freq()</a>, <a class="el" href="wireless_8c_source.html#l00154">wapi_freq2chan()</a>, <a class="el" href="wireless_8c_source.html#l00387">wapi_get_ap()</a>, <a class="el" href="wireless_8c_source.html#l00431">wapi_get_bitrate()</a>, <a class="el" href="wireless_8c_source.html#l00241">wapi_get_essid()</a>, <a class="el" href="wireless_8c_source.html#l00095">wapi_get_freq()</a>, <a class="el" href="util_8c_source.html#l00026">wapi_get_ifnames()</a>, <a class="el" href="network_8c_source.html#l00023">wapi_get_ifup()</a>, <a class="el" href="wireless_8c_source.html#l00328">wapi_get_mode()</a>, <a class="el" href="network_8c_source.html#l00150">wapi_get_routes()</a>, <a class="el" href="wireless_8c_source.html#l00509">wapi_get_txpower()</a>, <a class="el" href="wireless_8c_source.html#l00028">wapi_get_we_version()</a>, <a class="el" href="wireless_8c_source.html#l00740">wapi_scan_coll()</a>, and <a class="el" href="wireless_8c_source.html#l00404">wapi_set_ap()</a>.</p>
+<p>Referenced by <a class="el" href="wireless_8c_source.html#l00195">wapi_chan2freq()</a>, <a class="el" href="wireless_8c_source.html#l00154">wapi_freq2chan()</a>, <a class="el" href="wireless_8c_source.html#l00389">wapi_get_ap()</a>, <a class="el" href="wireless_8c_source.html#l00433">wapi_get_bitrate()</a>, <a class="el" href="wireless_8c_source.html#l00243">wapi_get_essid()</a>, <a class="el" href="wireless_8c_source.html#l00095">wapi_get_freq()</a>, <a class="el" href="util_8c_source.html#l00028">wapi_get_ifnames()</a>, <a class="el" href="network_8c_source.html#l00023">wapi_get_ifup()</a>, <a class="el" href="wireless_8c_source.html#l00330">wapi_get_mode()</a>, <a class="el" href="network_8c_source.html#l00150">wapi_get_routes()</a>, <a class="el" href="wireless_8c_source.html#l00511">wapi_get_txpower()</a>, <a class="el" href="wireless_8c_source.html#l00028">wapi_get_we_version()</a>, <a class="el" href="wireless_8c_source.html#l00742">wapi_scan_coll()</a>, and <a class="el" href="wireless_8c_source.html#l00406">wapi_set_ap()</a>.</p>
 
 </div>
 </div>
@@ -200,14 +201,14 @@ Functions</h2></td></tr>
 </div>
 <div class="memdoc">
 
-<p>Definition at line <a class="el" href="util_8c_source.html#l00090">90</a> of file <a class="el" href="util_8c_source.html">util.c</a>.</p>
+<p>Definition at line <a class="el" href="util_8c_source.html#l00092">92</a> of file <a class="el" href="util_8c_source.html">util.c</a>.</p>
 
-<p>References <a class="el" href="util_8c_source.html#l00085">wapi_ioctl_command_name_bufsiz</a>.</p>
+<p>References <a class="el" href="util_8c_source.html#l00087">wapi_ioctl_command_name_bufsiz</a>.</p>
 
 </div>
 </div>
 </div>
-<hr class="footer"/><address class="footer"><small>Generated on Tue Dec 14 2010 11:21:27 for WAPI by&nbsp;
+<hr class="footer"/><address class="footer"><small>Generated on Sun Dec 19 2010 00:16:20 for WAPI by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.1 </small></address>
 </body>

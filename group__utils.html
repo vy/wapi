@@ -54,14 +54,43 @@ Functions</h2></td></tr>
 <p>Parses <code>WAPI_PROC_NET_WIRELESS</code> according to hardcoded mechanisms in <code>linux/net/wireless/wext-proc.c</code> sources. </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"><tt>[out]</tt>&nbsp;</td><td valign="top"><em>list</em>&nbsp;</td><td>Pushes collected <code><a class="el" href="structwapi__string__t.html" title="Linked list container for strings.">wapi_string_t</a></code> into this list. </td></tr>
+    <tr><td valign="top"><tt>[out]</tt>&nbsp;</td><td valign="top"><em>list</em>&nbsp;</td><td>Pushes collected <code><a class="el" href="structwapi__string__t.html" title="Linked list container for strings.">wapi_string_t</a></code> into this list.</td></tr>
   </table>
   </dd>
 </dl>
+<p>Here is an example usage of the <a class="el" href="group__utils.html#ga575eec2b7dc9eec091ecbd5cdad1ec6e" title="Parses WAPI_PROC_NET_WIRELESS according to hardcoded mechanisms in linux/net/wireless/wext-proc.c sources.">wapi_get_ifnames()</a>.</p>
+<div class="fragment"><pre class="fragment"><span class="keyword">static</span> <span class="keywordtype">void</span>
+getifnames(<span class="keywordtype">void</span>)
+{
+    <a class="code" href="structwapi__list__t.html" title="A generic linked list container.">wapi_list_t</a> list;
 
-<p>Definition at line <a class="el" href="util_8c_source.html#l00026">26</a> of file <a class="el" href="util_8c_source.html">util.c</a>.</p>
+    bzero(&amp;list, <span class="keyword">sizeof</span>(<a class="code" href="structwapi__list__t.html" title="A generic linked list container.">wapi_list_t</a>));
+    <span class="keywordflow">if</span> (<a class="code" href="group__utils.html#ga575eec2b7dc9eec091ecbd5cdad1ec6e" title="Parses WAPI_PROC_NET_WIRELESS according to hardcoded mechanisms in linux/net/wireless/wext-proc.c sources.">wapi_get_ifnames</a>(&amp;list) &gt;= 0)
+    {
+        <a class="code" href="structwapi__string__t.html" title="Linked list container for strings.">wapi_string_t</a> *str;
 
-<p>References <a class="el" href="wapi_8h_source.html#l00612">wapi_string_t::data</a>, <a class="el" href="structwapi__list__t.html#a8c173e8470a754cd8b63e3ade855c3fe">wapi_list_t::head</a>, <a class="el" href="wapi_8h_source.html#l00655">wapi_list_t::wapi_list_head_t::string</a>, <a class="el" href="util_8h_source.html#l00029">WAPI_ERROR</a>, <a class="el" href="wapi_8h_source.html#l00606">WAPI_PROC_LINE_SIZE</a>, <a class="el" href="wapi_8h_source.html#l00600">WAPI_PROC_NET_WIRELESS</a>, <a class="el" href="util_8h_source.html#l00022">WAPI_STRERROR</a>, and <a class="el" href="util_8h_source.html#l00035">WAPI_VALIDATE_PTR</a>.</p>
+        <span class="comment">/* print ifnames */</span>
+        printf(<span class="stringliteral">&quot;ifnames:&quot;</span>);
+        <span class="keywordflow">for</span> (str = list.<a class="code" href="structwapi__list__t.html#a8c173e8470a754cd8b63e3ade855c3fe">head</a>.<a class="code" href="unionwapi__list__t_1_1wapi__list__head__t.html#a78726a4c5056338fb176a95ea8fc7571">string</a>; str; str = str-&gt;<a class="code" href="structwapi__string__t.html#a6e569a60438ad3aca01c15c710534a50">next</a>)
+            printf(<span class="stringliteral">&quot; %s&quot;</span>, str-&gt;<a class="code" href="structwapi__string__t.html#aed12f4bf6977aae0ba7898c0869f5495">data</a>);
+
+        <span class="comment">/* free ifnames */</span>
+        str = list.<a class="code" href="structwapi__list__t.html#a8c173e8470a754cd8b63e3ade855c3fe">head</a>.<a class="code" href="unionwapi__list__t_1_1wapi__list__head__t.html#a78726a4c5056338fb176a95ea8fc7571">string</a>;
+        <span class="keywordflow">while</span> (str)
+        {
+            <a class="code" href="structwapi__string__t.html" title="Linked list container for strings.">wapi_string_t</a> *tmp;
+
+            tmp = str-&gt;<a class="code" href="structwapi__string__t.html#a6e569a60438ad3aca01c15c710534a50">next</a>;
+            free(str-&gt;<a class="code" href="structwapi__string__t.html#aed12f4bf6977aae0ba7898c0869f5495">data</a>);
+            free(str);
+            str = tmp;
+        }
+    }
+}
+</pre></div> 
+<p>Definition at line <a class="el" href="util_8c_source.html#l00028">28</a> of file <a class="el" href="util_8c_source.html">util.c</a>.</p>
+
+<p>References <a class="el" href="wapi_8h_source.html#l00672">wapi_string_t::data</a>, <a class="el" href="structwapi__list__t.html#a8c173e8470a754cd8b63e3ade855c3fe">wapi_list_t::head</a>, <a class="el" href="wapi_8h_source.html#l00715">wapi_list_t::wapi_list_head_t::string</a>, <a class="el" href="util_8h_source.html#l00030">WAPI_ERROR</a>, <a class="el" href="wapi_8h_source.html#l00666">WAPI_PROC_LINE_SIZE</a>, <a class="el" href="wapi_8h_source.html#l00660">WAPI_PROC_NET_WIRELESS</a>, <a class="el" href="util_8h_source.html#l00023">WAPI_STRERROR</a>, and <a class="el" href="util_8h_source.html#l00036">WAPI_VALIDATE_PTR</a>.</p>
 
 </div>
 </div>
@@ -86,10 +115,12 @@ Functions</h2></td></tr>
 
 <p>Definition at line <a class="el" href="util_8c_source.html#l00019">19</a> of file <a class="el" href="util_8c_source.html">util.c</a>.</p>
 
+<p>References <a class="el" href="util_8h_source.html#l00023">WAPI_STRERROR</a>.</p>
+
 </div>
 </div>
 </div>
-<hr class="footer"/><address class="footer"><small>Generated on Tue Dec 14 2010 11:21:27 for WAPI by&nbsp;
+<hr class="footer"/><address class="footer"><small>Generated on Sun Dec 19 2010 00:16:20 for WAPI by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.1 </small></address>
 </body>
