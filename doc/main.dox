@@ -82,10 +82,6 @@ Ofcourse, not. (At least not at this point.) WAPI is just designed to meet our
 research needs. If you need any other feature implementations, just drop me a
 mail.
 
-@subsection showmecode Ok, I heard enough. Show me some code.
-
-Just check source files under @c examples directory.
-
 @subsection openwrt Can I integrate WAPI to OpenWrt as well?
 
 Sure! Just see @c Makefile.OpenWrt in the root directory.
