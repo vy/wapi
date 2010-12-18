@@ -29,6 +29,30 @@ typedef struct wapi_list_t wapi_list_t;
  * calls. In other words, on success, zero is returned.
  *
  * Pay attention that, all setters require root privileges.
+ *
+ * Below is an example usage of some accessor routines.
+ *
+ * @include conf.c
+ *
+ * A sample output of the above function is as follows.
+ *
+@verbatim
+ip: 192.168.1.111
+netmask: 255.255.255.0
+freq: 2.412e+09
+freq_flag: WAPI_FREQ_AUTO
+chan: 1
+freq: 2.412e+09
+essid: ozu
+essid_flag: WAPI_ESSID_ON
+mode: WAPI_MODE_MANAGED
+ap: 00:14:C1:34:CE:83
+wireless.c:451:wapi_get_bitrate(): Bitrate is disabled.
+wireless.c:546:wapi_get_txpower():ioctl(SIOCGIWTXPOW): Invalid argument
+@endverbatim
+ *
+ * As can be seen from the output, some functionalities are not supported by the
+ * underlying wireless network card of the test system.
  */
 
 
@@ -116,6 +140,17 @@ int wapi_set_netmask(int sock, const char *ifname, const struct in_addr *addr);
  * Parses routing table rows from @c WAPI_PROC_NET_ROUTE.
  *
  * @param[out] list Pushes collected @c wapi_route_info_t into this list.
+ *
+ * Below is example usage of wapi_get_routes().
+ *
+ * @include routes.c
+ *
+ * Here is a sample output of the above getroutes().
+ *
+@verbatim
+>> dest: 0.0.0.0, gw: 0.0.0.0, netmask: 0.0.0.0
+>> dest: 192.168.1.0, gw: 192.168.1.0, netmask: 192.168.1.0
+@endverbatim
  */
 int wapi_get_routes(wapi_list_t *list);
 
@@ -520,6 +555,10 @@ int wapi_make_socket(void);
  * linux/net/wireless/wext-proc.c sources.
  *
  * @param[out] list Pushes collected @c wapi_string_t into this list.
+ *
+ * Here is an example usage of the wapi_get_ifnames().
+ *
+ * @include ifnames.c
  */
 int wapi_get_ifnames(wapi_list_t *list);
 
@@ -539,7 +578,7 @@ int wapi_get_ifnames(wapi_list_t *list);
  * it is not provided by libiw.) For this purpose, we needed to implement our
  * own scanning routines. Furthermore, scanning requires extracting binary
  * results returned from kernel over a @c char buffer, hence it causes dozens of
- * hairy binary compatibility issues. Luckily, libiw provide an API method to
+ * hairy binary compatibility issues. Luckily, libiw provides an API method to
  * cope with this: iw_extract_event_stream(). That's the only place in this
  * project relying on libiw.
  *
@@ -559,6 +598,27 @@ int wapi_get_ifnames(wapi_list_t *list);
  * each other, which may create associations issues. For those reasons, the
  * scanning activity should be limited to what's really needed, and continuous
  * scanning is a bad idea. --- Jean Tourrilhes
+ *
+ * Here is an example demonstrating the usage of the scanning API.
+ *
+ * @include scan.c
+ *
+ * A sample output of the above function is as follows.
+ *
+@verbatim
+scan(): sleeptries: 5
+scan(): sleeptries: 4
+>> 00:23:f8:d2:90:3f ednz
+>> 00:1c:a8:14:6d:16 meddev
+>> 00:1a:2a:c0:47:84 suat
+>> 00:1c:a8:fe:93:8c home
+>> 00:25:86:cf:e6:e5 TP-LINK
+>> 00:02:cf:af:d9:96 ZyXEL
+>> 00:14:c1:34:ce:83 ozu
+@endverbatim
+ *
+ * Considering @c scan() function, pay attention that scanning requires root
+ * privileges. (See wapi_scan_init() for details.)
  *
  * @{
  */
