@@ -25,6 +25,7 @@ vars.AddVariables(
     BoolVariable('optimize', 'Compile with optimization flags turned on.', True),
     BoolVariable('profile', 'Enable profile information.', False),
     BoolVariable('check', 'Enable library/header checks.', True),
+    BoolVariable('examples', 'Compile examples.', False),
     )
 env = Environment(variables = vars)
 Help(vars.GenerateHelpText(env))
@@ -110,7 +111,7 @@ def require_hdr(hdr):
 src = env.Clone()	# Library sources.
 exa = env.Clone()	# Examples.
 
-if not env.GetOption('clean'):
+if not (env.GetOption('clean') or env.GetOption('help')):
     if env['check']:
         # Checking common libraries.
         map(require_hdr, common_hdrs)
@@ -145,9 +146,10 @@ src.SharedLibrary(
 
 ### Compile Examples ###########################################################
 
-exa.Append(LIBS = ["wapi"])
+if env['examples']:
+    exa.Append(LIBS = ['wapi'])
 
-exa.Program(opj(EXADIR, 'sample-get.c'))
-exa.Program(opj(EXADIR, 'sample-set.c'))
-exa.Program(opj(EXADIR, 'ifadd.c'))
-exa.Program(opj(EXADIR, 'ifdel.c'))
+    exa.Program(opj(EXADIR, 'sample-get.c'))
+    exa.Program(opj(EXADIR, 'sample-set.c'))
+    exa.Program(opj(EXADIR, 'ifadd.c'))
+    exa.Program(opj(EXADIR, 'ifdel.c'))
