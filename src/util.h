@@ -10,26 +10,27 @@
 
 #include <string.h>
 #include <errno.h>
+#include <libgen.h>
 
 
 #define WAPI_IOCTL_STRERROR(cmd)						\
 	fprintf(											\
 		stderr, "%s:%d:%s():ioctl(%s): %s\n",			\
-		__FILE__, __LINE__, __func__,					\
+		basename(__FILE__), __LINE__, __func__,			\
 		wapi_ioctl_command_name(cmd), strerror(errno))
 
 
 #define WAPI_STRERROR(fmt, ...)					\
 	fprintf(									\
 		stderr, "%s:%d:%s():" fmt ": %s\n",		\
-		__FILE__, __LINE__, __func__,			\
+		basename(__FILE__), __LINE__, __func__,	\
 		## __VA_ARGS__, strerror(errno))
 
 
-#define WAPI_ERROR(fmt, ...)							\
-	fprintf(											\
-		stderr, "%s:%d:%s(): " fmt ,					\
-		__FILE__, __LINE__, __func__, ## __VA_ARGS__)
+#define WAPI_ERROR(fmt, ...)									\
+	fprintf(													\
+		stderr, "%s:%d:%s(): " fmt ,							\
+		basename(__FILE__), __LINE__, __func__, ## __VA_ARGS__)
 
 
 #define WAPI_VALIDATE_PTR(ptr)						\

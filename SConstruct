@@ -63,6 +63,7 @@ common_hdrs = [
     'ctype.h',
     'errno.h',
     'iwlib.h',
+    'libgen.h',
     'linux/nl80211.h',
     'math.h',
     'netinet/in.h',
