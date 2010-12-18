@@ -182,6 +182,7 @@ wapi_freq2chan(int sock, const char *ifname, double freq, int *chan)
 			}
 
 		/* Oops! Nothing found. */
+		WAPI_ERROR("No channel matches for the given frequency!\n");
 		ret = -2;
 	}
 	else WAPI_IOCTL_STRERROR(SIOCGIWRANGE);
@@ -220,6 +221,7 @@ wapi_chan2freq(int sock, const char *ifname, int chan, double *freq)
 			}
 
 		/* Oops! Nothing found. */
+		WAPI_ERROR("No frequency matches for the given channel!\n");
 		ret = -2;
 	}
 	else WAPI_IOCTL_STRERROR(SIOCGIWRANGE);

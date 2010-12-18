@@ -18,7 +18,9 @@
 int
 wapi_make_socket(void)
 {
-	return socket(AF_INET, SOCK_DGRAM, 0);
+	int ret = socket(AF_INET, SOCK_DGRAM, 0);
+	if (ret < 0) WAPI_STRERROR("socket(AF_INET, SOCK_DGRAM, 0)");
+	return ret;
 }
 
 
