@@ -7,6 +7,9 @@
 #ifndef WAPI_H
 #define WAPI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -721,5 +724,8 @@ struct wapi_list_t {
 
 /** @} commons */
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WAPI_H */
