@@ -122,7 +122,7 @@
 
 \begin{frame}{Where Are We?}
   \begin{itemize}
-  \item \textbf{Finished!} (Yeah we did!)
+  \item \textbf{Finished!}
     \begin{itemize}
     \item Website \& Docs.: \url{http://vy.github.com/wapi/}
     \item Source Code: \url{http://www.github.com/vy/wapi/}
@@ -130,6 +130,28 @@
   \item Tested on various hardware. (Atheros, Broadcom, etc.)
   \item Fully documented code base. (Thanks Doxygen.)
   \item Now available as an \textbf{official OpenWrt package}!
+  \end{itemize}
+\end{frame}
+
+%-------------------------------------------------------------------------------
+
+\subsection{hostapd}
+
+\begin{frame}{hostapd}
+  \begin{itemize}
+  \item We can alter client side configurations?
+  \item What about AP side?
+  \item \texttt{hostapd} is the de-facto user space daemon,
+  \item but provides restrictions in terms of access:
+    \begin{itemize}
+    \item You are not allowed to externally alter the configurations of wireless
+      devices that are allocated by \texttt{hostapd}.
+    \item Access to \texttt{hostapd} is allowed in two ways:
+      \begin{itemize}
+      \item \texttt{hostapd} control interface (undocumented)
+      \item \texttt{hostapd.conf} (in machine-readable, mature format)
+      \end{itemize}
+    \end{itemize}
   \end{itemize}
 \end{frame}
 

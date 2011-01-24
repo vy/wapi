@@ -12,6 +12,7 @@ TMPFILES = \
 
 %.pdf: %.tex
 	pdflatex -halt-on-error $< $@
+	pdflatex -halt-on-error $< $@
 
 all: $(IMGFILES) $(TARGET)
 
