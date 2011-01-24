@@ -147,9 +147,8 @@ src.SharedLibrary(
 ### Compile Examples ###########################################################
 
 if env['examples']:
-    exa.Append(LIBS = ['wapi'])
-
-    exa.Program(opj(EXADIR, 'sample-get.c'))
-    exa.Program(opj(EXADIR, 'sample-set.c'))
-    exa.Program(opj(EXADIR, 'ifadd.c'))
-    exa.Program(opj(EXADIR, 'ifdel.c'))
+    exa.Program(opj(EXADIR, 'sample-get.c'), LIBS = ['wapi'])
+    exa.Program(opj(EXADIR, 'sample-set.c'), LIBS = ['wapi'])
+    exa.Program(opj(EXADIR, 'ifadd.c'), LIBS = ['wapi'])
+    exa.Program(opj(EXADIR, 'ifdel.c'), LIBS = ['wapi'])
+    exa.Program(opj(EXADIR, 'hostapd.cpp'))

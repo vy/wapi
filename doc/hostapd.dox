@@ -1,0 +1,63 @@
+/**
+
+@defgroup hostapd hostapd Configuration
+
+<a href="http://hostap.epitest.fi/hostapd/">@c hostapd</a> is the de-facto user
+space daemon for 802.11 access point and authentication servers. It implements
+IEEE 802.11 access point (AP) management, IEEE 802.1X/WPA/WPA2/EAP
+Authenticators, RADIUS client, EAP server, and RADIUS authentication server. @c
+hostapd is used from embedded commercial systems (Wi-Fi access points, etc.) to
+commodity desktop computers. Since WAPI is all about providing access to
+wireless device configurations, one might expect WAPI works with @c hostapd as
+well. But, as of time of this writing, this is practically impossible due to
+technical limitations.
+
+@note One would desire to change AP configurations on-the-fly without losing
+established connections. Despite this scheme is supported by 802.11, it is not
+currently provided by hostapd. (See <a
+href="http://lists.shmoo.com/pipermail/hostap/2011-January/022418.html">Changing
+Channel On-The-Fly</a>.) You are warned.
+
+@c hostapd is designed as a standalone application and doesn't allow external
+programs to play with the configurations of wireless device it is currently
+operating at. On the other hand, the decions (e.g. channel change) made by @c
+hostapd generally cannot be observed by external applications. (See <a
+href="http://lists.shmoo.com/pipermail/hostap/2011-January/022393.html">SIGHUP
+and iwconfig channel anomaly</a>.) For this purpose, there are two ways to
+communicate with @c hostapd to alter wireless device configurations.
+
+@section hostapdconffile Accessing hostapd Through hostapd.conf
+
+This is the most straightforward method to communicate with @c hostapd. Steps
+are, as expected, trivial:
+
+-# Read configurations from @c /etc/hostapd/hostapd.conf.
+-# Make necessary changes to the read configurations and write them back.
+-# Send a @c SIGHUP to @c hostapd process. (You can use @c /var/run/hostapd.pid
+   file.)
+
+Below is a sample C++ code (see @c examples/hostapd.cpp) implementing this
+method.
+
+@include hostapd.cpp
+
+@section hostapdwpactrl Accessing hostapd Through Control Interface
+
+@c hostapd provides a <a
+href="http://hostap.epitest.fi/wpa_supplicant/devel/hostapd_ctrl_iface_page.html">control
+interface</a> that can be used by external programs to control the operations of
+the hostapd daemon and to get status information and event notifications. There
+is a small C library, in a form of a single C file, @c wpa_ctrl.c, that provides
+helper functions to facilitate the use of the control interface. External
+programs can link this file into them and then use the library functions
+documented in @c wpa_ctrl.h to interact with @c hostapd.
+
+However, as of time of this writing, @c hostapd control interface commands lack
+documentation and are not that easy to implement compared to the straightforward
+approach given above. At the moment neither us, nor @c hostapd guys provide any
+entrance level examples regarding this control interface. You might want to
+check out <a
+href="http://hostap.epitest.fi/wpa_supplicant/devel/hostapd__cli_8c.html">hostapd_cli.c</a>
+in the @c hostapd sources.
+
+*/

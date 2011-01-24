@@ -200,7 +200,6 @@ wapi_del_route_gw(
  * interfaces.
  */
 
-
 /**
  * @defgroup misc Miscellaneous Accessors
  * @ingroup wifaccessors
