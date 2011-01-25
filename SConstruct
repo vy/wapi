@@ -151,4 +151,5 @@ if env['examples']:
     exa.Program(opj(EXADIR, 'sample-set.c'), LIBS = ['wapi'])
     exa.Program(opj(EXADIR, 'ifadd.c'), LIBS = ['wapi'])
     exa.Program(opj(EXADIR, 'ifdel.c'), LIBS = ['wapi'])
+    exa.Program(opj(EXADIR, 'recover.c'), LIBS = ['wapi'])
     exa.Program(opj(EXADIR, 'hostapd.cpp'))
