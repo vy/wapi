@@ -30,9 +30,9 @@
 <table class="memberdecls">
 </table>
 <p><a href="http://hostap.epitest.fi/hostapd/"><code>hostapd</code>  is the de-facto user space daemon for 802.11 access point and authentication servers. </a></p>
-<p>It implements IEEE 802.11 access point (AP) management, IEEE 802.1X/WPA/WPA2/EAP Authenticators, RADIUS client, EAP server, and RADIUS authentication server. <code>hostapd</code> is used from embedded commercial systems (Wi-Fi access points, etc.) to commodity desktop computers. Since WAPI is all about providing access to wireless device configurations, one might expect WAPI works with <code>hostapd</code> as well. But, as of time of this writing, this is practically impossible due to technical limitations.</p>
+<p>It implements IEEE 802.11 access point (AP) management, IEEE 802.1X/WPA/WPA2/EAP Authenticators, RADIUS client, EAP server, and RADIUS authentication server. <code>hostapd</code> is used from embedded commercial systems (Wi-Fi access points, etc.) to commodity desktop computers. Since WAPI is all about providing access to wireless device configurations, one might expect WAPI to work with <code>hostapd</code> as well. But, as of time of this writing, this is practically impossible due to technical limitations.</p>
 <dl class="note"><dt><b>Note:</b></dt><dd>One would desire to change AP configurations on-the-fly without losing established connections. Despite this scheme is supported by 802.11, it is not currently provided by hostapd. (See <a href="http://lists.shmoo.com/pipermail/hostap/2011-January/022418.html">Changing Channel On-The-Fly</a>.) You are warned.</dd></dl>
-<p><code>hostapd</code> is designed as a standalone application and doesn't allow external programs to play with the configurations of wireless device it is currently operating at. On the other hand, the decions (e.g. channel change) made by <code>hostapd</code> generally cannot be observed by external applications. (See <a href="http://lists.shmoo.com/pipermail/hostap/2011-January/022393.html">SIGHUP and iwconfig channel anomaly</a>.) For this purpose, there are two ways to communicate with <code>hostapd</code> to alter wireless device configurations.</p>
+<p><code>hostapd</code> is designed as a standalone application and doesn't allow external programs to play with the configurations of wireless device it is currently operating at. Moreover, the decions (e.g. channel change) made by <code>hostapd</code> generally cannot be observed by external applications. (See <a href="http://lists.shmoo.com/pipermail/hostap/2011-January/022393.html">SIGHUP and iwconfig channel anomaly</a>.) For this purpose, there are two ways to communicate with <code>hostapd</code> to alter wireless device configurations.</p>
 <h2><a class="anchor" id="hostapdconffile"></a>
 Accessing hostapd Through hostapd.conf</h2>
 <p>This is the most straightforward method to communicate with <code>hostapd</code>. Steps are, as expected, trivial:</p>
@@ -146,9 +146,111 @@ main(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</
 </pre></div><h2><a class="anchor" id="hostapdwpactrl"></a>
 Accessing hostapd Through Control Interface</h2>
 <p><code>hostapd</code> provides a <a href="http://hostap.epitest.fi/wpa_supplicant/devel/hostapd_ctrl_iface_page.html">control interface</a> that can be used by external programs to control the operations of the hostapd daemon and to get status information and event notifications. There is a small C library, in a form of a single C file, <code>wpa_ctrl.c</code>, that provides helper functions to facilitate the use of the control interface. External programs can link this file into them and then use the library functions documented in <code>wpa_ctrl.h</code> to interact with <code>hostapd</code>.</p>
-<p>However, as of time of this writing, <code>hostapd</code> control interface commands lack documentation and are not that easy to implement compared to the straightforward approach given above. At the moment neither us, nor <code>hostapd</code> guys provide any entrance level examples regarding this control interface. You might want to check out <a href="http://hostap.epitest.fi/wpa_supplicant/devel/hostapd__cli_8c.html">hostapd_cli.c</a> in the <code>hostapd</code> sources. </p>
-</div>
-<hr class="footer"/><address class="footer"><small>Generated on Mon Jan 24 2011 18:05:41 for WAPI by&nbsp;
+<p>However, as of time of this writing, <code>hostapd</code> control interface commands lack documentation and are not that easy to implement compared to the straightforward approach given above. At the moment neither us, nor <code>hostapd</code> guys provide any entrance level examples regarding this control interface. You might want to check out <a href="http://hostap.epitest.fi/wpa_supplicant/devel/hostapd__cli_8c.html">hostapd_cli.c</a> in the <code>hostapd</code> sources.</p>
+<h2><a class="anchor" id="recover"></a>
+Recovering Client Associations</h2>
+<p>As noted above, hostapd doesn't preserve associated connections after a configuration change on-the-fly. For this purpose, you can recover the associations from client side by searching for the same ESSID/AP and then switching back to new AP configurations. <code>examples/recover.c</code> implements a similar trick:</p>
+<div class="fragment"><pre class="fragment"><span class="preprocessor">#include &lt;stdio.h&gt;</span>
+<span class="preprocessor">#include &lt;unistd.h&gt;</span>
+<span class="preprocessor">#include &lt;stdlib.h&gt;</span>
+<span class="preprocessor">#include &lt;string.h&gt;</span>
+<span class="preprocessor">#include &lt;sys/timeb.h&gt;</span>
+
+<span class="preprocessor">#include &quot;<a class="code" href="wapi_8h.html" title="Public API declarations.">wapi.h</a>&quot;</span>
+
+
+<span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>
+epoch_millitm(<span class="keywordtype">void</span>)
+{
+    <span class="keyword">struct </span>timeb t;
+    ftime(&amp;t);
+    <span class="keywordflow">return</span> (t.time * 1000) + t.millitm;
+}
+
+
+<span class="keyword">static</span> <span class="keywordtype">int</span>
+recover_for_essid(
+    <span class="keywordtype">int</span> sock, <span class="keyword">const</span> <span class="keywordtype">char</span> *ifname, <span class="keyword">const</span> <span class="keywordtype">char</span> *essid, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> maxdur)
+{
+    <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> maxtm = epoch_millitm() + maxdur;
+    <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> sleepdur = 100;
+    <a class="code" href="structwapi__list__t.html" title="A generic linked list container.">wapi_list_t</a> list;
+    <a class="code" href="structwapi__scan__info__t.html" title="Linked list container for scan results.">wapi_scan_info_t</a> *info;
+    <span class="keywordtype">double</span> freq;
+    <span class="keywordtype">int</span> ret;
+
+scan:
+    <span class="comment">/* Initiate scan. */</span>
+    <span class="keywordflow">if</span> ((ret = <a class="code" href="group__scan.html#gac2aff8efd76d361703528735af7531f9" title="Starts a scan on the given interface.">wapi_scan_init</a>(sock, ifname)) &lt; 0)
+        <span class="keywordflow">return</span> ret;
+
+    <span class="comment">/* Wait for scan to complete. */</span>
+    <span class="keywordflow">for</span> (;epoch_millitm() &lt;= maxtm; usleep(sleepdur * 1000))
+        <span class="keywordflow">switch</span> ((ret = <a class="code" href="group__scan.html#gaa74552374156e69bc56ad15e2970b4ed" title="Checks the status of the scan process.">wapi_scan_stat</a>(sock, ifname)))
+        {
+        <span class="keywordflow">case</span> 0: <span class="keywordflow">break</span>;
+        <span class="keywordflow">case</span> 1: <span class="keywordflow">continue</span>;
+        <span class="keywordflow">default</span>: <span class="keywordflow">return</span> ret;
+        }
+
+    <span class="comment">/* Data is not ready. */</span>
+    <span class="keywordflow">if</span> (ret == 1) <span class="keywordflow">return</span> 1;
+
+    <span class="comment">/* Collect results. */</span>
+    <span class="keywordflow">if</span> ((ret = <a class="code" href="group__scan.html#ga0f56cf40fb2fffe63334cdff19a812b6" title="Collects the results of a scan process.">wapi_scan_coll</a>(sock, ifname, &amp;list)) &lt; 0)
+        <span class="keywordflow">return</span> ret;
+
+    <span class="comment">/* See if we have an AP with the given ESSID. */</span>
+    freq = -1;
+    <span class="keywordflow">for</span> (info = list.<a class="code" href="structwapi__list__t.html#a8c173e8470a754cd8b63e3ade855c3fe">head</a>.<a class="code" href="unionwapi__list__t_1_1wapi__list__head__t.html#a1fa054bb0101a875be4bcf514fb172bb">scan</a>; info; info = info-&gt;<a class="code" href="structwapi__scan__info__t.html#ad65e7c242f52e9ba3b4aa7681eb1be2c">next</a>)
+        <span class="keywordflow">if</span> (info-&gt;<a class="code" href="structwapi__scan__info__t.html#ae1a17e1912af037a4bc535c1c14b0140">has_essid</a> &amp;&amp; info-&gt;<a class="code" href="structwapi__scan__info__t.html#a11ca1789d4f592b1644bcf17d37d8c16">has_freq</a> &amp;&amp; !strcmp(info-&gt;<a class="code" href="structwapi__scan__info__t.html#a108c4fd7f20ffeddc7071566c3fa9ccf">essid</a>, essid))
+        {
+            freq = info-&gt;<a class="code" href="structwapi__scan__info__t.html#a8f6e075fa0a7441237da08997fe5ec2f">freq</a>;
+            <span class="keywordflow">break</span>;
+        }
+
+    <span class="comment">/* If no such AP, try again. */</span>
+    <span class="keywordflow">if</span> (freq &lt; 0)
+    {
+        ret = 1;
+        <span class="keywordflow">goto</span> scan;
+    }
+
+    <span class="comment">/* Switch to AP freq and ESSID. */</span>
+    <span class="keywordflow">if</span> ((ret = <a class="code" href="group__freq.html#ga9cf563be3f4b897bb96751d85db1faf4" title="Sets the operating frequency of the device.">wapi_set_freq</a>(sock, ifname, freq, <a class="code" href="group__freq.html#gga6635aa657f3338eabcf8facbddf97f6daf82e005a13123130b93f63f9819f2e2a">WAPI_FREQ_FIXED</a>)) &gt; 0)
+        ret = <a class="code" href="group__essid.html#gaccbc415656332da62af6763b675f4005" title="Sets ESSID of the device.">wapi_set_essid</a>(sock, ifname, essid, <a class="code" href="group__essid.html#gga0c60b44b5678adb83c7b51f2068432f5a38e6c1da3b947ce99cd56beb3918050f">WAPI_ESSID_ON</a>);
+
+    <span class="keywordflow">return</span> ret;
+}
+
+
+<span class="keywordtype">int</span>
+main(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span> *argv[])
+{
+    <span class="keyword">const</span> <span class="keywordtype">char</span> *ifname;
+    <span class="keyword">const</span> <span class="keywordtype">char</span> *essid;
+    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> maxdur;
+    <span class="keywordtype">int</span> sock;
+    <span class="keywordtype">int</span> ret;
+
+    <span class="comment">/* Parse command line arguments. */</span>
+    <span class="keywordflow">if</span> (argc != 4)
+    {
+        fprintf(stderr, <span class="stringliteral">&quot;Usage: %s &lt;IFNAME&gt; &lt;ESSID&gt; &lt;MAXDUR&gt;\n&quot;</span>, argv[0]);
+        <span class="keywordflow">return</span> EXIT_FAILURE;
+    }
+    ifname = argv[1];
+    essid = argv[2];
+    maxdur = atoi(argv[3]);
+
+    <span class="keywordflow">if</span> ((sock = <a class="code" href="group__utils.html#ga9a13608f9736a249e5bcf1b2c498086a" title="Creates an AF_INET socket to be used in ioctl() calls.">wapi_make_socket</a>()) &lt; 0) <span class="keywordflow">return</span> EXIT_FAILURE;
+    ret = recover_for_essid(sock, ifname, essid, maxdur);
+    close(sock);
+
+    <span class="keywordflow">return</span> ret;
+}
+</pre></div> </div>
+<hr class="footer"/><address class="footer"><small>Generated on Tue Jan 25 2011 15:32:48 for WAPI by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.1 </small></address>
 </body>
