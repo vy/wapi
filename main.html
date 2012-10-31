@@ -24,7 +24,7 @@
 <h1>Wireless API (WAPI) </h1>  </div>
 </div>
 <div class="contents">
-<p><a href="http://github.com/vy/wapi">WAPI</a> provides an easy-to-use function set to configure wireless network interfaces in a GNU/Linux system. One can think WAPI as a lightweight C API for <code>iwconfig</code>, <code>wlanconfig</code>, <code>ifconfig</code>, and <code>route</code> commands. (But it is not a thin wrapper for these command line tools.) It is designed to be used in wireless heteregenous network research projects and supported by <a href="http://bwrc.eecs.berkeley.edu/">BWRC (Berkeley Wireless Research Center)</a> and <a href="http://www.wiserlab.org/">WISERLAB (Wireless Information Systems Engineering Research Laboratory at Özyeğin University)</a>.</p>
+<p><a href="http://github.com/vy/wapi">WAPI</a> provides an easy-to-use function set to configure wireless network interfaces in a GNU/Linux system. One can think WAPI as a lightweight C API for <code>iwconfig</code>, <code>wlanconfig</code>, <code>ifconfig</code>, and <code>route</code> commands. (But it is not a thin wrapper for these command line tools.) It is currently being used in <a href="http://www.wiserlab.org/">WISERLAB</a> <a href="http://faculty.ozyegin.edu.tr/aliercan/?page_id=341">test-bed</a> to configure 802.11 based wireless interfaces. The development is partially supported by European Commission Grant Number PIRG06-GA-2009-256326.</p>
 <p>For <code>iwconfig</code>, <code>ifconfig</code>, and <code>route</code> command functionalities, WAPI issues same set of ioctl() calls to the netlink kernel. While <code>ifconfig</code> and <code>route</code> doesn't have that many ad-hoc hacks for backward compatibility issues, <code>iwconfig</code> is messed with dozens of such stuff in all around the code. In WAPI, we try to avoid all such hacks and target recent hardware and kernel versions (&gt;2.6). But most of the time, it should just work fine. For virtual (wireless) interface management, we rely on <a href="http://linuxwireless.org/en/developers/Documentation/nl80211">nl80211</a> netlink interface. (Which is actually intended to replace Wireless Extensions.)</p>
 <h2><a class="anchor" id="dload"></a>
 Download</h2>
@@ -53,9 +53,8 @@ Can I integrate WAPI to OpenWrt as well?</h3>
 I found a bug. What then?</h3>
 <p>Just report me via e-mail. (A detailed explanation to reproduce the problem would be awesome.) I will try to fix it ASAP. </p>
 </div>
-<hr class="footer"/><address class="footer"><small>Generated on Tue Jan 25 2011 15:32:48 for WAPI by&nbsp;
+<hr class="footer"/><address class="footer"><small>Generated on Wed Oct 31 2012 09:36:45 for WAPI by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.1 </small></address>
 </body>
 </html>
-
