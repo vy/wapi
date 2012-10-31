@@ -6,11 +6,11 @@
 set to configure wireless network interfaces in a GNU/Linux system. One can
 think WAPI as a lightweight C API for @c iwconfig, @c wlanconfig, @c ifconfig,
 and @c route commands. (But it is not a thin wrapper for these command line
-tools.) It is designed to be used in wireless heteregenous network research
-projects and supported by <a href="http://bwrc.eecs.berkeley.edu/">BWRC
-(Berkeley Wireless Research Center)</a> and <a
-href="http://www.wiserlab.org/">WISERLAB (Wireless Information Systems
-Engineering Research Laboratory at Özyeğin University)</a>.
+tools.) It is currently being used in <a
+href="http://www.wiserlab.org/">WISERLAB</a> <a
+href="http://faculty.ozyegin.edu.tr/aliercan/?page_id=341">test-bed</a> to
+configure 802.11 based wireless interfaces. The development is partially
+supported by European Commission Grant Number PIRG06-GA-2009-256326.
 
 For @c iwconfig, @c ifconfig, and @c route command functionalities, WAPI issues
 same set of ioctl() calls to the netlink kernel. While @c ifconfig and @c route

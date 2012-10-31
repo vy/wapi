@@ -7,10 +7,10 @@
 WAPI (Wireless API) provides an easy-to-use function set to configure wireless
 network interfaces on a GNU/Linux system. One can think WAPI as a lightweight C
 API for iwconfig, wlanconfig, ifconfig, and route commands. (But it is not a
-thin wrapper for these command line tools.) It is designed to be used in
-wireless heteregenous network research projects and supported by BWRC (Berkeley
-Wireless Research Center) and WISERLAB (Wireless Information Systems Engineering
-Research Laboratory at Özyeğin University).
+thin wrapper for these command line tools.) It is currently being used in
+WISERLAB test-bed to configure 802.11 based wireless interfaces. The development
+is partially supported by European Commission Grant Number
+PIRG06-GA-2009-256326.
 
 For source codes, see http://github.com/vy/wapi. While you can manually generate
 the documentation via Doxygen, the most recent version of the documentation is
