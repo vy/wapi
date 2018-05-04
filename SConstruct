@@ -68,11 +68,6 @@ common_hdrs = [
     'linux/nl80211.h',
     'math.h',
     'netinet/in.h',
-    'netlink/attr.h',
-    'netlink/genl/ctrl.h',
-    'netlink/genl/family.h',
-    'netlink/genl/genl.h',
-    'netlink/msg.h',
     'net/route.h',
     'stdio.h',
     'stdlib.h',
@@ -127,6 +122,9 @@ if not (env.GetOption('clean') or env.GetOption('help')):
     elif conf.CheckPkg('libnl-2.0', '2'):
         src.ParseConfig('pkg-config --libs --cflags libnl-2.0')
         src.Append(CCFLAGS = '-DLIBNL2')
+    elif conf.CheckPkg('libnl-3.0', '3'):
+        src.ParseConfig('pkg-config --libs --cflags libnl-3.0')
+        src.Append(CCFLAGS = '-DLIBNL3')
     else:
         stderr.write('libnl could not be found!')
         Exit(1)
@@ -142,6 +140,10 @@ src.Append(CPPPATH = [SRCDIR])
 src.SharedLibrary(
     opj(LIBDIR, 'wapi'),
     map(src.SharedObject, common_srcs))
+src.StaticLibrary(
+    opj(LIBDIR, 'wapi_static'),
+    map(src.StaticObject, common_srcs)
+)
 
 
 ### Compile Examples ###########################################################
