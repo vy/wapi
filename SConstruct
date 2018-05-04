@@ -123,8 +123,8 @@ if not (env.GetOption('clean') or env.GetOption('help')):
         src.ParseConfig('pkg-config --libs --cflags libnl-2.0')
         src.Append(CCFLAGS = '-DLIBNL2')
     elif conf.CheckPkg('libnl-3.0', '3'):
-            src.ParseConfig('pkg-config --libs --cflags libnl-3.0')
-            src.Append(CCFLAGS = '-DLIBNL3')
+        src.ParseConfig('pkg-config --libs --cflags libnl-3.0')
+        src.Append(CCFLAGS = '-DLIBNL3')
     else:
         stderr.write('libnl could not be found!')
         Exit(1)
